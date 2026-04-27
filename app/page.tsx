@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main className="border border-black min-h-dvh">
       <HeroPage />
-      <SecondPage />
+      {/* <SecondPage /> */}
     </main>
   );
 }

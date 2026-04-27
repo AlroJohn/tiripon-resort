@@ -1,0 +1,26 @@
+{
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "gpt-4.1",
+        "name": "GPT-4.1",
+        "envKey": "OPENAI_API_KEY",
+        "baseUrl": "https://api.openai.com/v1"
+      }
+    ]
+  },
+  "$version": 3,
+  "model": {
+    "name": "gpt-4.1"
+  },
+  "security": {
+    "auth": {
+      "selectedType": "openai"
+    }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(del *)"
+    ]
+  }
+}
