@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body className={`min-h-dvh border border-black relative`}>
+      <body className={`min-h-dvh relative`}>
         <div className="w-full h-full absolute">
           <Header />
         </div>

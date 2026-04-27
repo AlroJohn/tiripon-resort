@@ -90,7 +90,7 @@ export default function Footer() {
         </div>
       </div>
       <Separator className="" />
-      <div className="max-w-[90dvw] w-full md:py-0 py-4 h-[10dvh] flex md:flex-row flex-col md:gap-4 justify-between items-center">
+      <div className="max-w-[90dvw] w-full md:py-6 py-6 h-[15dvh] md:h-[10dvh] flex md:flex-row flex-col gap-2 md:gap-4 justify-between items-center">
         <p>Hotel and Resort created by Alro John Mercado</p>
         <p>Copyright &copy; {new Date().getFullYear()} All rights reserved.</p>
       </div>

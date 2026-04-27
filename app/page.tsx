@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="border border-black min-h-dvh">
+    <main className=" min-h-dvh">
       <HeroPage />
       <VideoPage />
       {/* <SecondPage /> */}
