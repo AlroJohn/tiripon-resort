@@ -4,7 +4,7 @@ import { Separator } from "../ui/separator";
 
 export default function Footer() {
   return (
-    <div className="md:h-fit min-h-full w-full flex flex-col gap-12 items-center pt-24">
+    <div className="md:h-fit min-h-full w-full flex flex-col items-center pt-24">
       <div className="h-[20dvh] w-full max-w-[90dvw] overflow-hidden pb-12">
         <div className=" flex flex-row gap-4 items-center justify-center">
           <Separator className="border border-accent-foreground/50 md:block hidden" />
@@ -12,8 +12,9 @@ export default function Footer() {
           <Separator className="border border-accent-foreground/50 md:block hidden" />
         </div>
       </div>
-      <div className="max-w-[90dvw] w-full h-full grid md:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-6 pb-12">
-        <div className="col-span-1 flex flex-col gap-4 font-googlesansflex">
+      <div className="md:max-w-[90dvw] w-full h-full md:grid md:grid-cols-4 sm:grid-cols-2 flex flex-col gap-6 pb-12">
+        <Separator className="border w-full md:hidden block " />
+        <div className="col-span-1 flex flex-col gap-4 font-googlesansflex md:p-0 p-4">
           <h3 className="text-2xl font-semibold ">About Us</h3>
           <p className="cormorant-garamond md:max-w-[80%]">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
@@ -37,7 +38,8 @@ export default function Footer() {
             />
           </div>
         </div>
-        <div className="font-googlesansflex col-span-2  flex flex-row gap-6 w-full min-h-[20dvh]">
+        <Separator className="border w-full md:hidden block" />
+        <div className="font-googlesansflex col-span-2 md:p-0 p-4 flex flex-row gap-6 w-full min-h-[20dvh]">
           <div className="w-full  flex flex-col gap-4">
             <h3 className="text-xl font-semibold ">Hours</h3>
             <div className="">
@@ -72,8 +74,8 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
-        <div className="col-span-1 flex flex-col gap-4 font-googlesansflex">
+        <Separator className="border w-full md:hidden block" />
+        <div className="col-span-1 flex flex-col gap-4 md:p-0 p-4 font-googlesansflex">
           <h3 className="capitalize text-xl font-semibold ">
             Subscribe to our newsletter
           </h3>
@@ -88,7 +90,7 @@ export default function Footer() {
         </div>
       </div>
       <Separator className="" />
-      <div className="max-w-[90dvw] w-full  h-[10dvh] flex md:flex-row flex-col md:gap-4 justify-between items-center">
+      <div className="max-w-[90dvw] w-full md:py-0 py-4 h-[10dvh] flex md:flex-row flex-col md:gap-4 justify-between items-center">
         <p>Hotel and Resort created by Alro John Mercado</p>
         <p>Copyright &copy; {new Date().getFullYear()} All rights reserved.</p>
       </div>

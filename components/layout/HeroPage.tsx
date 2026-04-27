@@ -14,10 +14,10 @@ export default function HeroPage() {
 
       {/* Overlay */}
       <div className="absolute inset-0 z-10 ">
-        <div className="z-10 w-full h-full  flex md:flex-row flex-col justify-between items-center">
+        <div className="z-10 w-full h-full  flex flex-row justify-between items-center">
           <div className="relative h-full w-full">
             {/* Blur/fade overlay only */}
-            <div className="absolute inset-0 md:bg-black/20 bg-black/30 md:backdrop-blur-sm md:[mask-image:linear-gradient(to_right,black_55%,transparent)] md:[-webkit-mask-image:linear-gradient(to_right,black_90%,transparent)]" />
+            <div className="absolute inset-0 bg-black/30 md:backdrop-blur-sm md:[mask-image:linear-gradient(to_right,black_55%,transparent)] md:[-webkit-mask-image:linear-gradient(to_right,black_90%,transparent)]" />
 
             {/* Content stays fully visible */}
             <div className="relative z-10 flex h-full w-full items-center justify-start">
@@ -52,7 +52,7 @@ export default function HeroPage() {
               </div>
             </div>
           </div>
-          {/* <div className="h-full w-full md:relative">
+          <div className="h-full w-full md:relative md:block hidden">
             <div className="p-4 md:absolute rounded md:bottom-24 md:right-24 z-50 flex md:h-[25dvh] md:max-w-[25dvw] w-full items-center justify-center bg-white/10 shadow-lg backdrop-blur-sm">
               <div className="w-full h-full flex flex-row items-center capitalize gap-4 p-4">
                 <h3 className="text-xl font-googlesansflex text-accent max-w-72">
@@ -67,7 +67,7 @@ export default function HeroPage() {
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
