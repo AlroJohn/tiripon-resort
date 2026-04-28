@@ -86,6 +86,11 @@ export default function Header() {
         return;
       }
 
+      if (window.scrollY <= 0) {
+        setUseLightHeader(true);
+        return;
+      }
+
       const previousPointerEvents = header.style.pointerEvents;
       header.style.pointerEvents = "none";
 

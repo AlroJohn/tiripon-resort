@@ -7,7 +7,7 @@ export default function HeroPage() {
     <div className="relative h-dvh w-full overflow-hidden">
       {/* Background Image */}
       <img
-        src="/examples/2.jpg"
+        src="/examples/4.jpg"
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
       />
