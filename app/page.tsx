@@ -8,7 +8,7 @@ export default function Home() {
     <main className=" min-h-dvh">
       <HeroPage />
       <VideoPage />
-      {/* <SecondPage /> */}
+      <SecondPage />
     </main>
   );
 }

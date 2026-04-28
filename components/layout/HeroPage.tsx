@@ -23,18 +23,18 @@ export default function HeroPage() {
             <div className="relative z-10 flex h-full w-full items-center justify-start">
               <div className="my-auto flex h-full max-h-[50dvh] flex-col justify-around gap-12 px-[5dvw]">
                 <h1
-                  className="text-accent w-full md:text-9xl text-5xl font-heading capitalize"
+                  className="text-cream w-full md:text-9xl text-5xl font-heading capitalize"
                   style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
                 >
                   Unlock your{" "}
                   <span className="flex items-center gap-4">
-                    <Separator className="max-w-16 border border-amber-100" />
+                    <Separator className="max-w-16 border border-cream" />
                     <span>best stays</span>
                   </span>
                 </h1>
 
                 <p
-                  className="text-white w-full md:max-w-[35dvw] rounded p-4 md:text-xl text-lg md:font-bodoni font-googlesansflex"
+                  className="text-cream w-full md:max-w-[35dvw] rounded p-4 md:text-xl text-lg font-googlesansflex"
                   style={{ textShadow: "0 2px 8px rgba(0,0,0,1)" }}
                 >
                   Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sunt

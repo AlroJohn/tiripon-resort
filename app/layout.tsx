@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body className={`min-h-dvh relative`}>
+      <body className={`min-h-dvh relative bg-cream`}>
         <div className="w-full h-full absolute">
           <Header />
         </div>

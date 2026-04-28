@@ -75,17 +75,17 @@ export default function Footer() {
           </div>
         </div>
         <Separator className="border w-full md:hidden block" />
-        <div className="col-span-1 flex flex-col gap-4 md:p-0 p-4 font-googlesansflex">
+        <div className="col-span-1 flex flex-col gap-4 md:p-0 p-6 font-googlesansflex">
           <h3 className="capitalize text-xl font-semibold ">
             Subscribe to our newsletter
           </h3>
           <div className="relative w-full">
             <Input
-              className=" h-12 pr-12 rounded-none"
+              className=" h-14 pr-14 rounded-none border-4 border-brown/70"
               placeholder="Enter your email"
             />
 
-            <ArrowRight className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-accent text-accent-foreground p-2 cursor-pointer" />
+            <ArrowRight className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-till text-accent-foreground p-2 cursor-pointer" />
           </div>
         </div>
       </div>
