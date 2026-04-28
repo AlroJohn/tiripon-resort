@@ -11,14 +11,13 @@ export default function HeroPage() {
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
       />
+      {/* Blur/fade overlay only */}
+      <div className="absolute inset-0 bg-black/20 " />
 
       {/* Overlay */}
       <div className="absolute inset-0 z-10 ">
         <div className="z-10 w-full h-full  flex flex-row justify-between items-center">
           <div className="relative h-full w-full">
-            {/* Blur/fade overlay only */}
-            <div className="absolute inset-0 bg-black/30 md:backdrop-blur-sm md:[mask-image:linear-gradient(to_right,black_55%,transparent)] md:[-webkit-mask-image:linear-gradient(to_right,black_90%,transparent)]" />
-
             {/* Content stays fully visible */}
             <div className="relative z-10 flex h-full w-full items-center justify-start">
               <div className="my-auto flex h-full max-h-[50dvh] flex-col justify-around gap-12 px-[5dvw]">

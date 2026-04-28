@@ -86,7 +86,9 @@ export default function Header() {
         return;
       }
 
-      if (window.scrollY <= 0) {
+      const bounds = header.getBoundingClientRect();
+
+      if (window.scrollY < window.innerHeight - bounds.height) {
         setUseLightHeader(true);
         return;
       }
@@ -94,7 +96,6 @@ export default function Header() {
       const previousPointerEvents = header.style.pointerEvents;
       header.style.pointerEvents = "none";
 
-      const bounds = header.getBoundingClientRect();
       const target = document.elementFromPoint(
         window.innerWidth / 2,
         Math.max(1, bounds.top + bounds.height / 2)
