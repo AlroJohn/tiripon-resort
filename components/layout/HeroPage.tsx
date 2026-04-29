@@ -11,7 +11,7 @@ export default function HeroPage() {
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <div className="absolute inset-0  bg-black/10" />
+      <div className="absolute inset-0  bg-black/20" />
       {/* Overlay */}
       <div className="absolute inset-0 z-10 ">
         <div className="z-10 w-full h-full  flex flex-row justify-between items-center">

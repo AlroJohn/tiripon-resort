@@ -15,8 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body className={`min-h-dvh relative bg-cream`}>
-        <div className="w-full h-full absolute">
+      <body className="min-h-dvh relative bg-gradient-to-b from-accent via-cream/70 to-cream">
+        <div className="absolute h-full w-full">
           <Header />
         </div>
         {children}
