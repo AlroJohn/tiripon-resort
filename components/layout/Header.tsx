@@ -16,7 +16,7 @@ function isTransparent(color: string) {
 
 function shouldUseLightHeader(color: string) {
   const rgb = color.match(
-    /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+%?))?\s*\)/
+    /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+%?))?\s*\)/,
   );
 
   if (rgb) {
@@ -36,7 +36,7 @@ function shouldUseLightHeader(color: string) {
   }
 
   const oklch = color.match(
-    /oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/
+    /oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/,
   );
 
   if (oklch) {
@@ -98,7 +98,7 @@ export default function Header() {
 
       const target = document.elementFromPoint(
         window.innerWidth / 2,
-        Math.max(1, bounds.top + bounds.height / 2)
+        Math.max(1, bounds.top + bounds.height / 2),
       );
 
       header.style.pointerEvents = previousPointerEvents;
@@ -115,7 +115,8 @@ export default function Header() {
           return;
         }
 
-        const backgroundColor = window.getComputedStyle(element).backgroundColor;
+        const backgroundColor =
+          window.getComputedStyle(element).backgroundColor;
 
         if (!isTransparent(backgroundColor)) {
           setUseLightHeader(shouldUseLightHeader(backgroundColor));
@@ -161,14 +162,14 @@ export default function Header() {
         ${showHeader ? "md:translate-y-0" : "md:-translate-y-full"}
       `}
     >
-      <nav className="mx-auto w-full max-w-[90dvw] rounded-2xl px-4 py-3 md:px-6 md:py-4">
+      <nav className="mx-auto w-full max-w-[90dvw] rounded-2xl px-0 py-3 md:px-6 md:py-4">
         <ul
           className={`flex flex-row ${headerTextColor} items-center justify-between uppercase transition-colors duration-300`}
         >
           {/* Menu */}
-          <li className="flex items-center gap-4">
+          <li className="flex items-center md:gap-4 gap-2">
             <Button
-              className={`bg-white/5 p-4 border-none rounded-none cursor-pointer uppercase text-sm md:text-lg font-thin ${headerTextColor}`}
+              className={`bg-white/5 md:p-4 border-none rounded-none cursor-pointer uppercase text-sm md:text-lg font-thin ${headerTextColor}`}
             >
               <div className="w-8 md:w-10 flex flex-col gap-2">
                 <Separator className={`border ${separatorColor}`} />
@@ -185,7 +186,7 @@ export default function Header() {
               alt="Logo"
               width={180}
               height={72}
-              className="h-8 w-auto md:h-12"
+              className="h-7 w-auto md:h-8"
               priority
             />
           </li>

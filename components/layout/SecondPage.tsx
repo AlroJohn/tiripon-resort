@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowRight, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
+import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { DatePicker } from "./DatePicker";
 import { Button } from "../ui/button";
@@ -91,9 +92,42 @@ export default function SecondPage() {
         </div>
       </div>
 
-      <div className="relative mx-auto max-w-[90dvw]">
-        <div className="grid min-h-[68dvh] bg-[#86a8b5] md:grid-cols-[0.9fr_1.1fr]">
-          <div className="flex flex-col justify-center px-6 py-16 text-cream md:px-16">
+      <motion.div
+        className="relative mx-auto max-w-[90dvw]"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={{
+          hidden: {},
+          visible: {
+            transition: {
+              staggerChildren: 0.14,
+            },
+          },
+        }}
+      >
+        <motion.div
+          className="grid min-h-[68dvh] bg-[#86a8b5] md:grid-cols-[0.9fr_1.1fr]"
+          variants={{
+            hidden: { opacity: 0, y: 46 },
+            visible: {
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.75, ease: "easeOut" },
+            },
+          }}
+        >
+          <motion.div
+            className="flex flex-col justify-center px-6 py-16 text-cream md:px-16"
+            variants={{
+              hidden: { opacity: 0, x: -28 },
+              visible: {
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.7, ease: "easeOut" },
+              },
+            }}
+          >
             <p className="font-googlesansflex text-sm font-semibold uppercase">
               The luxury resort
             </p>
@@ -112,12 +146,22 @@ export default function SecondPage() {
               Book Now
               <ArrowRight className="size-4" />
             </Button> */}
-          </div>
+          </motion.div>
 
-          <div className="relative min-h-[46dvh] md:min-h-full">
+          <motion.div
+            className="relative min-h-[46dvh] md:min-h-full"
+            variants={{
+              hidden: { opacity: 0, x: 34 },
+              visible: {
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.75, ease: "easeOut" },
+              },
+            }}
+          >
             <div className="absolute inset-x-0 bottom-[-8dvh] top-0 overflow-hidden rounded-none md:inset-x-0 md:bottom-[-15dvh] md:right-15 md:top-16 md:rounded-2xl">
               <Image
-                src="/examples/3.jpg"
+                src="/examples/10.jpg"
                 alt="Resort villa and pool"
                 fill
                 className="object-cover w-full"
@@ -125,10 +169,20 @@ export default function SecondPage() {
                 priority
               />
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <form className="relative z-10 mx-auto mt-10 grid gap-3 p-4 shadow-2xl backdrop-blur-md md:-mt-12 md:w-[92%] md:grid-cols-[1fr_1fr_1fr_1fr_1.2fr] md:p-5">
+        <motion.form
+          className="relative z-10 mx-auto mt-10 grid gap-3 p-4 shadow-2xl backdrop-blur-md md:-mt-12 md:w-[92%] md:grid-cols-[1fr_1fr_1fr_1fr_1.2fr] md:p-5"
+          variants={{
+            hidden: { opacity: 0, y: 34 },
+            visible: {
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.7, ease: "easeOut" },
+            },
+          }}
+        >
           <label className="bg-white p-4">
             <span className="font-googlesansflex text-sm font-semibold uppercase text-brown">
               Check in
@@ -209,14 +263,24 @@ export default function SecondPage() {
               Search Room
             </Button>
           </div>
-        </form>
+        </motion.form>
 
-        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 font-googlesansflex text-sm text-brown/70 md:ml-[4%]">
+        <motion.div
+          className="mt-5 flex flex-wrap gap-x-6 gap-y-2 font-googlesansflex text-sm text-brown/70 md:ml-[4%]"
+          variants={{
+            hidden: { opacity: 0, y: 16 },
+            visible: {
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.55, ease: "easeOut" },
+            },
+          }}
+        >
           <span>Ages 4-10: ₱30 each</span>
           <span>Ages 11 and above: ₱50 each</span>
           <span>Check-in window: 6:00 AM-12:00 PM</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }

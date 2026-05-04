@@ -1,5 +1,6 @@
 import HeroPage from "@/components/layout/HeroPage";
 import SecondPage from "@/components/layout/SecondPage";
+import ThirdPage from "@/components/layout/ThirdPage";
 import VideoPage from "@/components/layout/VideoPage";
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
       <HeroPage />
       <VideoPage />
       <SecondPage />
-    </main>
+      <ThirdPage />
+  </main>
   );
 }
