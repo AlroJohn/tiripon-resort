@@ -17,25 +17,25 @@ const villaSlides = [
     name: "Villa Sundara",
     description:
       "A place where time stands still. Among herbs' scent and the wind's whisper, find peace hidden from the world.",
-    image: "/images/2.jpg",
+    image: "/images/2.png",
   },
   {
     name: "Villa Miraia",
     description:
       "A warm retreat with open views and soft evening light, made for quiet conversations and long coastal mornings.",
-    image: "/images/3.jpg",
+    image: "/images/3.png",
   },
   {
     name: "Villa Azari",
     description:
       "A modern escape with generous spaces, natural textures, and calm interiors that frame the surrounding sea breeze.",
-    image: "/images/4.jpg",
+    image: "/images/4.png",
   },
   {
     name: "Villa Veluna",
     description:
       "An intimate hideaway surrounded by greenery, balancing private comfort with effortless indoor-outdoor living.",
-    image: "/images/5.jpg",
+    image: "/images/5.png",
   },
 ];
 
@@ -211,12 +211,10 @@ export default function ThirdPage() {
                 {villaSlides.map((slide) => (
                   <CarouselItem key={slide.name} className="pl-0">
                     <div className="relative aspect-[4/5] w-full  sm:aspect-[16/10]">
-                      <Image
+                      <img
                         src={slide.image}
                         alt={slide.name}
-                        fill
-                        className="object-cover"
-                        sizes="(min-width: 768px) 66vw, 90vw"
+                        className="object-cover w-full h-full"
                       />
                     </div>
                   </CarouselItem>

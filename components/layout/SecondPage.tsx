@@ -149,7 +149,7 @@ export default function SecondPage() {
           </motion.div>
 
           <motion.div
-            className="relative min-h-[46dvh] md:min-h-full"
+            className="relative min-h-[28dvh] md:min-h-full"
             variants={{
               hidden: { opacity: 0, x: 34 },
               visible: {
@@ -161,9 +161,9 @@ export default function SecondPage() {
           >
             <div className="absolute inset-x-0 bottom-[-8dvh] top-0 overflow-hidden rounded-none md:inset-x-0 md:bottom-[-15dvh] md:right-15 md:top-16 md:rounded-2xl">
               <img
-                src="/images/12.jpg"
+                src="/images/6.png"
                 alt="Resort villa and pool"
-                className="object-cover object-[center_40%] w-full"
+                className="object-cover md:object-[center_40%] w-full"
               />
             </div>
           </motion.div>
