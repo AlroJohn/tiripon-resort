@@ -148,7 +148,7 @@ export default function Header() {
   const separatorBackground = useLightHeader
     ? "bg-accent/30"
     : "bg-accent-foreground/30";
-  const logoSrc = useLightHeader ? "/logo/logo_white.png" : "/logo/logo.png";
+  const logoSrc = useLightHeader ? "/logo/logo-white.png" : "/logo/logo.png";
 
   return (
     <header

@@ -17,25 +17,25 @@ const villaSlides = [
     name: "Villa Sundara",
     description:
       "A place where time stands still. Among herbs' scent and the wind's whisper, find peace hidden from the world.",
-    image: "/examples/2.jpg",
+    image: "/images/2.jpg",
   },
   {
     name: "Villa Miraia",
     description:
       "A warm retreat with open views and soft evening light, made for quiet conversations and long coastal mornings.",
-    image: "/examples/3.jpg",
+    image: "/images/3.jpg",
   },
   {
     name: "Villa Azari",
     description:
       "A modern escape with generous spaces, natural textures, and calm interiors that frame the surrounding sea breeze.",
-    image: "/examples/4.jpg",
+    image: "/images/4.jpg",
   },
   {
     name: "Villa Veluna",
     description:
       "An intimate hideaway surrounded by greenery, balancing private comfort with effortless indoor-outdoor living.",
-    image: "/examples/1.jpg",
+    image: "/images/5.jpg",
   },
 ];
 
@@ -203,14 +203,14 @@ export default function ThirdPage() {
             <Carousel
               setApi={setApi}
               opts={{ loop: true, align: "start" }}
-              className={`w-full transition-opacity duration-300 ease-in-out ${
+              className={`w-full transition-opacity duration-300 ease-in-out rounded-xl overflow-hidden ${
                 isCarouselFading ? "opacity-0" : "opacity-100"
               }`}
             >
               <CarouselContent className="ml-0">
                 {villaSlides.map((slide) => (
                   <CarouselItem key={slide.name} className="pl-0">
-                    <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[16/10] sm:rounded-2xl">
+                    <div className="relative aspect-[4/5] w-full  sm:aspect-[16/10]">
                       <Image
                         src={slide.image}
                         alt={slide.name}

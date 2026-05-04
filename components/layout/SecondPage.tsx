@@ -160,13 +160,10 @@ export default function SecondPage() {
             }}
           >
             <div className="absolute inset-x-0 bottom-[-8dvh] top-0 overflow-hidden rounded-none md:inset-x-0 md:bottom-[-15dvh] md:right-15 md:top-16 md:rounded-2xl">
-              <Image
-                src="/examples/10.jpg"
+              <img
+                src="/images/12.jpg"
                 alt="Resort villa and pool"
-                fill
-                className="object-cover w-full"
-                sizes="(min-width: 768px) 50vw, 100vw"
-                priority
+                className="object-cover object-[center_40%] w-full"
               />
             </div>
           </motion.div>
@@ -249,7 +246,7 @@ export default function SecondPage() {
           <div className="grid grid-cols-[1fr_auto] overflow-hidden bg-tan text-brown md:grid-cols-1">
             <div className="flex flex-col justify-center px-5 py-4">
               <span className="font-googlesansflex text-sm font-semibold uppercase">
-                Total fee
+                Total Entrance Fee
               </span>
               <span className="mt-1 text-3xl font-semibold">₱{total}</span>
               <span className="mt-1 text-base text-brown">
@@ -260,7 +257,7 @@ export default function SecondPage() {
               type="button"
               className="h-full rounded-none bg-tan px-5 text-brown shadow-none hover:bg-khaki md:h-auto md:min-h-16"
             >
-              Search Room
+              Search for Rooms or Cottages
             </Button>
           </div>
         </motion.form>
