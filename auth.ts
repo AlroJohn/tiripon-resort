@@ -13,6 +13,10 @@ async function verifyPassword(password: string, storedPassword: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret:
+    process.env.AUTH_SECRET ??
+    process.env.NEXTAUTH_SECRET ??
+    "resort-static-local-development-auth-secret",
   session: {
     strategy: "jwt",
   },
