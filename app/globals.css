@@ -89,6 +89,7 @@
   --color-tan: var(--tan);
   --color-stone: var(--stone);
   --color-cream: var(--cream);
+  --color-sand: var(--sand);
   --color-green: var(--green);
   --color-mint: var(--mint);
   --color-till: var(--till);
@@ -101,6 +102,7 @@
   --tan: oklch(0.707 0.052 72.797);
   --stone: oklch(0.777 0.024 98.728);
   --cream: oklch(0.945 0.016 64.668);
+  --sand: oklch(0.858 0.039 83.393);
   --green: oklch(0.489 0.065 144.511);
   --mint: oklch(0.695 0.075 163.491);
   --till: oklab(71.072% -0.03046 -0.02866);

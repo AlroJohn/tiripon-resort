@@ -18,14 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html>
-      <body className="min-h-dvh relative bg-gradient-to-b from-accent via-cream/30 to-cream/70">
-        <div className="absolute h-full w-full">
-          <Header />
-        </div>
-        {children}
-        <Footer />
-        <Toaster position="top-right" richColors />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
