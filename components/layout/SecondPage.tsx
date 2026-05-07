@@ -1,11 +1,28 @@
 "use client";
 
 import Image from "next/image";
-import { Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useBookingRequest } from "@/hooks/use-booking-request";
+import type { SelectedCottage } from "@/lib/booking-types";
 import { DatePicker } from "./DatePicker";
 import { Button } from "../ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "../ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import {
   Select,
   SelectContent,
@@ -28,6 +45,30 @@ const checkInTimes = [
   "11:00 AM",
   "11:30 AM",
   "12:00 PM",
+];
+
+const cottages = [
+  {
+    name: "Poolside Cabana",
+    description: "Open-air cabana for small families near the pool area.",
+    image: "/images/cabana-1.png",
+    price: 1500,
+    capacity: "4-6 guests",
+  },
+  {
+    name: "Garden Cabana",
+    description: "Shaded garden cottage with relaxed seating and privacy.",
+    image: "/images/cabana-2.png",
+    price: 2200,
+    capacity: "6-8 guests",
+  },
+  {
+    name: "Family Cabana",
+    description: "Larger cabana with generous space for group day stays.",
+    image: "/images/cabana-3.png",
+    price: 3200,
+    capacity: "8-12 guests",
+  },
 ];
 
 function GuestStepper({
@@ -69,18 +110,109 @@ function GuestStepper({
 }
 
 export default function SecondPage() {
+  const { createBooking, error, isLoading, reset } = useBookingRequest();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedCottageNames, setSelectedCottageNames] = useState<string[]>(
+    [],
+  );
   const [date, setDate] = useState<Date>();
   const [checkInTime, setCheckInTime] = useState("6:00 AM");
   const [children, setChildren] = useState(0);
   const [olderGuests, setOlderGuests] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const total = useMemo(
     () => children * 30 + olderGuests * 50,
     [children, olderGuests],
   );
 
+  const selectedCottages = useMemo(
+    () =>
+      cottages.filter((cottage) => selectedCottageNames.includes(cottage.name)),
+    [selectedCottageNames],
+  );
+
+  const cottageTotal = useMemo(
+    () => selectedCottages.reduce((sum, cottage) => sum + cottage.price, 0),
+    [selectedCottages],
+  );
+
+  const bookingTotal = total + cottageTotal;
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    reset();
+
+    if (!date) {
+      setFormError("Please select your check-in date.");
+      return;
+    }
+
+    if (children + olderGuests < 1) {
+      setFormError("Please add at least one guest.");
+      return;
+    }
+
+    setFormError(null);
+    setIsBookingModalOpen(true);
+  };
+
+  const toggleCottage = (cottageName: string) => {
+    setSelectedCottageNames((current) =>
+      current.includes(cottageName)
+        ? current.filter((name) => name !== cottageName)
+        : [...current, cottageName],
+    );
+  };
+
+  const handleBookingSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!date) {
+      setFormError("Please select your check-in date.");
+      setIsBookingModalOpen(false);
+      return;
+    }
+
+    if (selectedCottages.length < 1) {
+      setFormError("Please select at least one cottage.");
+      return;
+    }
+
+    setFormError(null);
+
+    try {
+      const result = await createBooking({
+        name,
+        email,
+        phone,
+        cottages: selectedCottages.map<SelectedCottage>((cottage) => ({
+          name: cottage.name,
+          description: cottage.description,
+          price: cottage.price,
+        })),
+        checkInDate: date.toISOString().slice(0, 10),
+        checkInTime,
+        children,
+        olderGuests,
+        entranceTotal: total,
+        totalPrice: bookingTotal,
+        summary: `${children} kids, ${olderGuests} adults, ${selectedCottages.length} cottage(s) selected.`,
+      });
+      setIsBookingModalOpen(false);
+      toast.success(result.message, {
+        duration: 3500,
+      });
+    } catch {
+      // The hook owns the request error state rendered below.
+    }
+  };
+
   return (
-    <section className="relative min-h-dvh overflow-hidden bg-cream px-4 py-14 text-brown md:px-[4.5dvw] md:py-20">
+    <section className="relative min-h-dvh overflow-hidden px-4 py-14 text-brown md:px-[4.5dvw] md:py-20">
       <div className="pointer-events-none absolute inset-0 opacity-35">
         <div className="mx-auto grid h-full max-w-[90dvw] grid-cols-4 border-x border-brown/15 md:grid-cols-8">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -160,16 +292,19 @@ export default function SecondPage() {
             }}
           >
             <div className="absolute inset-x-0 bottom-[-8dvh] top-0 overflow-hidden rounded-none md:inset-x-0 md:bottom-[-15dvh] md:right-15 md:top-16 md:rounded-2xl">
-              <img
+              <Image
                 src="/images/6.png"
                 alt="Resort villa and pool"
-                className="object-cover md:object-[center_40%] w-full"
+                fill
+                className="object-cover md:object-[center_40%]"
+                sizes="(min-width: 768px) 50vw, 100vw"
               />
             </div>
           </motion.div>
         </motion.div>
 
         <motion.form
+          onSubmit={handleSearch}
           className="relative z-10 mx-auto mt-10 grid gap-3 p-4 shadow-2xl backdrop-blur-md md:-mt-12 md:w-[92%] md:grid-cols-[1fr_1fr_1fr_1fr_1.2fr] md:p-5"
           variants={{
             hidden: { opacity: 0, y: 34 },
@@ -254,13 +389,211 @@ export default function SecondPage() {
               </span>
             </div>
             <Button
-              type="button"
-              className="h-full rounded-none bg-tan px-5 text-brown shadow-none hover:bg-khaki md:h-auto md:min-h-16"
+              type="submit"
+              className="h-full rounded-none bg-green/30 px-5 text-brown shadow-none hover:bg-khaki md:h-auto md:min-h-16"
             >
               Search for Rooms or Cottages
             </Button>
           </div>
+
+          {(formError || error) && (
+            <p className="bg-white px-4 py-3 font-googlesansflex text-sm text-brown md:col-span-full">
+              {formError ?? error}
+            </p>
+          )}
         </motion.form>
+
+        <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+          <DialogContent className="max-h-[92dvh] overflow-y-auto rounded-none bg-cream p-0 text-brown sm:max-w-[92dvw] lg:max-w-5xl">
+            <form onSubmit={handleBookingSubmit}>
+              <div className="grid gap-0 md:grid-cols-[1.35fr_0.85fr]">
+                <div className="min-w-0 bg-white p-5 md:p-7">
+                  <DialogHeader>
+                    <DialogTitle className="font-heading text-4xl text-brown md:text-5xl">
+                      Select cottages
+                    </DialogTitle>
+                    <DialogDescription className="font-googlesansflex text-brown/65">
+                      Review the cabana image, rate, and capacity before
+                      selecting one or more cottages for your booking.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <Carousel
+                    opts={{ align: "start", loop: true }}
+                    className="mt-6"
+                  >
+                    <CarouselContent>
+                      {cottages.map((cottage) => {
+                        const isSelected = selectedCottageNames.includes(
+                          cottage.name,
+                        );
+
+                        return (
+                          <CarouselItem
+                            key={cottage.name}
+                            className="md:basis-1/2"
+                          >
+                            <motion.button
+                              type="button"
+                              onClick={() => toggleCottage(cottage.name)}
+                              whileHover={{ y: -3 }}
+                              whileTap={{ scale: 0.985 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 360,
+                                damping: 28,
+                              }}
+                              className={`block w-full overflow-hidden border bg-cream text-left transition ${
+                                isSelected
+                                  ? "border-brown shadow-xl shadow-brown/15"
+                                  : "border-brown/15 shadow-sm hover:border-brown/45 hover:shadow-lg hover:shadow-brown/10"
+                              }`}
+                            >
+                              <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                <Image
+                                  src={cottage.image}
+                                  alt={cottage.name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(min-width: 1024px) 36vw, 82vw"
+                                />
+                                <motion.span
+                                  className="absolute right-3 top-3 flex size-9 items-center justify-center bg-white text-brown shadow"
+                                  animate={{
+                                    scale: isSelected ? 1 : 0.92,
+                                    opacity: isSelected ? 1 : 0.86,
+                                  }}
+                                  transition={{
+                                    type: "spring",
+                                    stiffness: 420,
+                                    damping: 24,
+                                  }}
+                                >
+                                  {isSelected ? (
+                                    <motion.span
+                                      initial={{ scale: 0, rotate: -20 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      transition={{
+                                        type: "spring",
+                                        stiffness: 500,
+                                        damping: 22,
+                                      }}
+                                    >
+                                      <Check className="size-5" />
+                                    </motion.span>
+                                  ) : (
+                                    <span className="size-4 border border-brown/45" />
+                                  )}
+                                </motion.span>
+                              </div>
+                              <div className="grid gap-3 p-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <h3 className="font-heading text-2xl">
+                                    {cottage.name}
+                                  </h3>
+                                  <span className="font-googlesansflex text-lg font-semibold">
+                                    ₱{cottage.price.toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="font-googlesansflex text-sm leading-6 text-brown/70">
+                                  {cottage.description}
+                                </p>
+                                <p className="font-googlesansflex text-sm font-semibold uppercase text-brown">
+                                  Capacity: {cottage.capacity}
+                                </p>
+                              </div>
+                            </motion.button>
+                          </CarouselItem>
+                        );
+                      })}
+                    </CarouselContent>
+                    <CarouselPrevious
+                      type="button"
+                      className="left-2 bg-white text-brown"
+                    />
+                    <CarouselNext
+                      type="button"
+                      className="right-2 bg-white text-brown"
+                    />
+                  </Carousel>
+                </div>
+
+                <div className="flex flex-col bg-tan p-5 md:p-7">
+                  <div className="grid gap-3">
+                    <label>
+                      <span className="font-googlesansflex text-sm font-semibold uppercase">
+                        Name
+                      </span>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        required
+                        placeholder="Guest name"
+                        className="mt-2 h-11 w-full rounded-none border-none bg-white px-3 text-brown outline-none"
+                      />
+                    </label>
+
+                    <label>
+                      <span className="font-googlesansflex text-sm font-semibold uppercase">
+                        Email
+                      </span>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="Email address"
+                        className="mt-2 h-11 w-full rounded-none border-none bg-white px-3 text-brown outline-none"
+                      />
+                    </label>
+
+                    <label>
+                      <span className="font-googlesansflex text-sm font-semibold uppercase">
+                        Phone number
+                      </span>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(event) => setPhone(event.target.value)}
+                        placeholder="Phone number"
+                        className="mt-2 h-11 w-full rounded-none border-none bg-white px-3 text-brown outline-none"
+                      />
+                    </label>
+
+                    <div className="mt-1 border-t border-brown/20 pt-4 font-googlesansflex">
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span>Entrance fee</span>
+                        <span>₱{total.toLocaleString()}</span>
+                      </div>
+                      <div className="mt-2 flex justify-between gap-4 text-sm">
+                        <span>Cottage rate</span>
+                        <span>₱{cottageTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="mt-4 flex justify-between gap-4 text-xl font-semibold">
+                        <span>Total</span>
+                        <span>₱{bookingTotal.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {(formError || error) && (
+                      <p className="bg-white px-3 py-2 font-googlesansflex text-sm text-brown">
+                        {formError ?? error}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="mt-5 h-11 w-full rounded-none bg-brown px-7 text-cream hover:bg-brown/90 md:mt-auto"
+                  >
+                    {isLoading ? "Creating Booking..." : "Confirm Booking"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <motion.div
           className="mt-5 flex flex-wrap gap-x-6 gap-y-2 font-googlesansflex text-sm text-brown/70 md:ml-[4%]"

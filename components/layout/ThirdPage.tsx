@@ -2,15 +2,9 @@
 
 import Image from "next/image";
 import { ArrowRight, MoveLeft, MoveRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from "../ui/carousel";
 
 const villaSlides = [
   {
@@ -40,57 +34,34 @@ const villaSlides = [
 ];
 
 export default function ThirdPage() {
-  const [api, setApi] = useState<CarouselApi>();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isCarouselFading, setIsCarouselFading] = useState(false);
-  const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!api) return;
+    const autoplayInterval = setInterval(() => {
+      setActiveIndex((currentIndex) => (currentIndex + 1) % villaSlides.length);
+    }, 10000);
 
-    const onSelect = () => setActiveIndex(api.selectedScrollSnap());
-    onSelect();
-    api.on("select", onSelect);
-
-    return () => {
-      api.off("select", onSelect);
-    };
-  }, [api]);
-
-  useEffect(() => {
-    return () => {
-      if (fadeTimeoutRef.current) {
-        clearTimeout(fadeTimeoutRef.current);
-      }
-    };
+    return () => clearInterval(autoplayInterval);
   }, []);
 
-  const fadeCarouselTo = (scroll: () => void) => {
-    if (fadeTimeoutRef.current) {
-      clearTimeout(fadeTimeoutRef.current);
-    }
-
-    setIsCarouselFading(true);
-    fadeTimeoutRef.current = setTimeout(() => {
-      scroll();
-      setIsCarouselFading(false);
-    }, 180);
+  const handleVillaSelect = (index: number) => {
+    setActiveIndex(index);
   };
 
-  const handleVillaSelect = (index: number) => {
-    if (index === activeIndex) return;
+  const handlePreviousVilla = () => {
+    setActiveIndex((currentIndex) =>
+      currentIndex === 0 ? villaSlides.length - 1 : currentIndex - 1,
+    );
+  };
 
-    setActiveIndex(index);
-
-    if (!api) return;
-
-    fadeCarouselTo(() => api.scrollTo(index));
+  const handleNextVilla = () => {
+    setActiveIndex((currentIndex) => (currentIndex + 1) % villaSlides.length);
   };
 
   const activeSlide = villaSlides[activeIndex] ?? villaSlides[0];
 
   return (
-    <section className="min-h-dvh w-full bg-cream px-4 py-12 md:px-[5dvw] md:py-20">
+    <section className="min-h-dvh w-full px-4 py-12 md:px-[5dvw] md:py-20">
       <motion.div
         className="mx-auto grid w-full max-w-[92rem] gap-10 md:grid-cols-[0.9fr_1.9fr]"
         initial="hidden"
@@ -183,10 +154,6 @@ export default function ThirdPage() {
               embraces the land&apos;s natural contours, allowing each structure
               to settle gently into the coastal landscape.
             </p>
-            <Button className="h-10 self-start rounded-full bg-tan px-4 text-sm text-brown hover:bg-khaki sm:h-12 sm:px-7 sm:text-base">
-              View All Available Villas
-              <ArrowRight className="size-4" />
-            </Button>
           </motion.div>
 
           <motion.div
@@ -200,43 +167,46 @@ export default function ThirdPage() {
               },
             }}
           >
-            <Carousel
-              setApi={setApi}
-              opts={{ loop: true, align: "start" }}
-              className={`w-full transition-opacity duration-300 ease-in-out rounded-xl overflow-hidden ${
-                isCarouselFading ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              <CarouselContent className="ml-0">
-                {villaSlides.map((slide) => (
-                  <CarouselItem key={slide.name} className="pl-0">
-                    <div className="relative aspect-[4/5] w-full  sm:aspect-[16/10]">
-                      <img
-                        src={slide.image}
-                        alt={slide.name}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-tan sm:aspect-[16/10]">
+              <AnimatePresence initial={false} mode="sync">
+                <motion.div
+                  key={activeSlide.name}
+                  className="absolute inset-0"
+                  initial={{ opacity: 0, scale: 1.025 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.985 }}
+                  transition={{
+                    opacity: { duration: 0.65, ease: "easeInOut" },
+                    scale: { duration: 0.9, ease: "easeOut" },
+                  }}
+                >
+                  <Image
+                    src={activeSlide.image}
+                    alt={activeSlide.name}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 768px) 66vw, 90vw"
+                    priority={activeIndex === 0}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
             <Button
               type="button"
               size="icon-lg"
-              onClick={() => fadeCarouselTo(() => api?.scrollPrev())}
+              onClick={handlePreviousVilla}
               aria-label="Previous villa"
-              className="absolute left-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-14 md:-left-10 md:size-20"
+              className="absolute left-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-left-10 md:size-14"
             >
               <MoveLeft className="size-5 sm:size-6 md:size-8" />
             </Button>
             <Button
               type="button"
               size="icon-lg"
-              onClick={() => fadeCarouselTo(() => api?.scrollNext())}
+              onClick={handleNextVilla}
               aria-label="Next villa"
-              className="absolute right-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-14 md:-right-10 md:size-20"
+              className="absolute right-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-right-10 md:size-14"
             >
               <MoveRight className="size-5 sm:size-6 md:size-8" />
             </Button>

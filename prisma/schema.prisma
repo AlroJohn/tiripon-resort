@@ -12,18 +12,32 @@ datasource db {
   provider = "postgresql"
 }
 
+model Administrator {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+
+  @@map("administrators")
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
   password  String
   createdAt DateTime @default(now())
+
+  @@map("users")
 }
 
 model Subscribers {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   createdAt DateTime @default(now())
+
+  @@map("subscribers")
 }
 
 model ContactUs {
@@ -32,18 +46,25 @@ model ContactUs {
   email     String
   message   String
   createdAt DateTime @default(now())
+
+  @@map("contact_us")
 }
 
 model Booking {
-  id             Int        @id @default(autoincrement())
-  name           String
-  email          String?
-  phone          String?
-  cottage        Cottages[]
-  numberOfGuests String
-  checkIn        DateTime?
-  checkOut       DateTime?
-  createdAt      DateTime   @default(now())
+  id              Int        @id @default(autoincrement())
+  name            String
+  email           String?
+  phone           String?
+  cottage         Cottages[]
+  number_of_adult String
+  number_of_kids  String
+  total_price     Float
+  summary         String?
+  checkIn         DateTime?
+  checkOut        DateTime?
+  createdAt       DateTime   @default(now())
+
+  @@map("bookings")
 }
 
 model Cottages {
@@ -52,8 +73,10 @@ model Cottages {
   description String
   price       Float
   createdAt   DateTime @default(now())
-  booking     Booking? @relation(fields: [bookingId], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   bookingId   Int?
+
+  @@map("cottages")
 }
 
 model DefaultChatNodes {
@@ -61,4 +84,6 @@ model DefaultChatNodes {
   question  String
   answer    String
   createdAt DateTime @default(now())
+
+  @@map("default_chat_nodes")
 }

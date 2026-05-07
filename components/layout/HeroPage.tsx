@@ -15,7 +15,7 @@ export default function HeroPage() {
     >
       {/* Background Image */}
       <motion.img
-        src="/images/1.png"
+        src="/images/mayones.png"
         alt=""
         className="absolute inset-0 h-full w-full object-cover"
         initial={{ scale: 1.08 }}

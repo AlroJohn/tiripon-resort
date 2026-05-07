@@ -60,12 +60,23 @@ function shouldUseLightHeader(color: string) {
 
 export default function Header() {
   const headerRef = useRef<HTMLElement>(null);
-  const [showHeader, setShowHeader] = useState(false);
+  const lastScrollYRef = useRef(0);
+  const [showHeader, setShowHeader] = useState(true);
   const [useLightHeader, setUseLightHeader] = useState(true);
 
   useEffect(() => {
     const updateHeaderVisibility = () => {
-      setShowHeader(window.scrollY > 0);
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 4) {
+        setShowHeader(true);
+      } else if (currentScrollY > lastScrollYRef.current) {
+        setShowHeader(true);
+      } else if (currentScrollY < lastScrollYRef.current) {
+        setShowHeader(false);
+      }
+
+      lastScrollYRef.current = currentScrollY;
     };
 
     updateHeaderVisibility();
@@ -158,8 +169,7 @@ export default function Header() {
         flex h-[10dvh] w-full items-center justify-center
         bg-white/10 shadow-lg backdrop-blur-sm
         transform transition-transform duration-300 ease-out
-        translate-y-0
-        ${showHeader ? "md:translate-y-0" : "md:-translate-y-full"}
+        ${showHeader ? "translate-y-0" : "-translate-y-full"}
       `}
     >
       <nav className="mx-auto w-full max-w-[90dvw] rounded-2xl px-0 py-3 md:px-6 md:py-4">
