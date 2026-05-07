@@ -6,7 +6,7 @@ export type SelectedCottage = {
 
 export type BookingRequestPayload = {
   name: string;
-  email?: string;
+  email: string;
   phone?: string;
   cottage: SelectedCottage[];
   number_of_adult: string;
@@ -37,6 +37,13 @@ export type BookingResponse = {
       description: string;
       price: number;
     }>;
+    receipt: {
+      id: number;
+      downPaymentAmount: number;
+      status: string;
+    } | null;
   };
+  receiptUrl: string | null;
+  emailSent: boolean;
   message: string;
 };

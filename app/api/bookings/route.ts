@@ -1,4 +1,5 @@
 import type { BookingRequestPayload } from "@/lib/booking-types";
+import { sendReservationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 const CHECKOUT_TIME = "5:30 PM";
@@ -11,7 +12,9 @@ function isBookingPayload(value: unknown): value is BookingRequestPayload {
   return (
     typeof payload.name === "string" &&
     payload.name.trim().length > 0 &&
-    (payload.email === undefined || typeof payload.email === "string") &&
+    typeof payload.email === "string" &&
+    payload.email.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email) &&
     (payload.phone === undefined || typeof payload.phone === "string") &&
     Array.isArray(payload.cottage) &&
     payload.cottage.length > 0 &&
@@ -85,10 +88,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid checkout date." }, { status: 400 });
   }
 
+  const downPaymentAmount = body.total_price * 0.5;
   const booking = await prisma.booking.create({
     data: {
       name: body.name.trim(),
-      email: body.email?.trim() || null,
+      email: body.email.trim(),
       phone: body.phone?.trim() || null,
       number_of_adult: body.number_of_adult,
       number_of_kids: body.number_of_kids,
@@ -109,13 +113,41 @@ export async function POST(request: Request) {
     },
   });
 
+  const receipt = await prisma.receipt.create({
+    data: {
+      bookingId: booking.id,
+      downPaymentAmount,
+    },
+  });
+
+  const receiptUrl = new URL(`/receipt/${receipt.id}`, request.url).toString();
+  let emailSent = false;
+
+  try {
+    await sendReservationEmail({
+      to: body.email.trim(),
+      name: body.name.trim(),
+      receiptUrl,
+      totalPrice: body.total_price,
+      downPaymentAmount,
+    });
+    emailSent = true;
+  } catch (error) {
+    console.error("Failed to send reservation email", error);
+  }
+
   return Response.json(
     {
       booking: {
         ...booking,
+        receipt,
         checkoutTime: CHECKOUT_TIME,
       },
-      message: "Booking request created.",
+      receiptUrl,
+      emailSent,
+      message: emailSent
+        ? "Booking request created. Reservation email sent."
+        : "Booking request created. Reservation email could not be sent.",
     },
     { status: 201 },
   );

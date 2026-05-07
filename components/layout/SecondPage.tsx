@@ -64,7 +64,7 @@ const cottages = [
   },
   {
     name: "Family Cabana",
-    description: "Larger cabana with generous space for group day stays.",
+    description: "Larger cabana with generous space for group day visits.",
     image: "/images/cabana-3.png",
     price: 3200,
     capacity: "8-12 guests",
@@ -215,7 +215,10 @@ export default function SecondPage() {
   };
 
   return (
-    <section className="relative min-h-dvh overflow-hidden px-4 py-14 text-brown md:px-[4.5dvw] md:py-20">
+    <section
+      id="booking"
+      className="relative min-h-dvh scroll-mt-[10dvh] overflow-hidden px-4 py-14 text-brown md:px-[4.5dvw] md:py-20"
+    >
       <div className="pointer-events-none absolute inset-0 opacity-35">
         <div className="mx-auto grid h-full max-w-[90dvw] grid-cols-4 border-x border-brown/15 md:grid-cols-8">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -395,7 +398,7 @@ export default function SecondPage() {
               type="submit"
               className="h-full rounded-none bg-green/30 px-5 text-brown shadow-none hover:bg-khaki md:h-auto md:min-h-16"
             >
-              Search for Rooms or Cottages
+              Search and Select Cottages
             </Button>
           </div>
 
@@ -545,6 +548,7 @@ export default function SecondPage() {
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
+                        required
                         placeholder="Email address"
                         className="mt-2 h-11 w-full rounded-none border-none bg-white px-3 text-brown outline-none"
                       />

@@ -1,11 +1,26 @@
 "use client";
 
 import { ArrowRightFromLine } from "lucide-react";
-import { motion } from "framer-motion";
+import { animate, motion } from "framer-motion";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 
 export default function HeroPage() {
+  const scrollToBooking = () => {
+    const bookingSection = document.getElementById("booking");
+
+    if (!bookingSection) return;
+
+    const targetY =
+      bookingSection.getBoundingClientRect().top + window.scrollY;
+
+    animate(window.scrollY, targetY, {
+      duration: 1,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (latest) => window.scrollTo(0, latest),
+    });
+  };
+
   return (
     <motion.div
       className="relative h-dvh w-full overflow-hidden"
@@ -93,7 +108,11 @@ export default function HeroPage() {
                     },
                   }}
                 >
-                  <Button className="flex h-12 w-48 cursor-pointer gap-4 rounded-full p-2 text-xl">
+                  <Button
+                    type="button"
+                    onClick={scrollToBooking}
+                    className="flex h-12 w-48 cursor-pointer gap-4 rounded-full p-2 text-xl"
+                  >
                     Book Now
                     <span className="flex items-center justify-center rounded-full bg-muted p-2">
                       <ArrowRightFromLine className="text-accent-foreground" />
