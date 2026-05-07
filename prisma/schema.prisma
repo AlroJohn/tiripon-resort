@@ -12,15 +12,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model Administrator {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-
-  @@map("administrators")
-}
 
 model User {
   id        Int      @id @default(autoincrement())

@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import bcrypt from "bcryptjs";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { prisma } from "@/lib/prisma";
 
 const adminEmail = "admin@tiriponresort.com";
@@ -38,20 +37,9 @@ function loadEnvFile() {
   }
 }
 
-function getConnectionString() {
+async function main() {
   loadEnvFile();
 
-  const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-
-  if (!connectionString) {
-    throw new Error("DIRECT_URL or DATABASE_URL is required to seed the database.");
-  }
-
-  return connectionString;
-}
-
-
-async function main() {
   const password = await bcrypt.hash(defaultPassword, 10);
 
   const administrator = await prisma.administrator.upsert({
@@ -69,7 +57,23 @@ async function main() {
     },
   });
 
+  const user = await prisma.user.upsert({
+    where: {
+      email: adminEmail,
+    },
+    update: {
+      name: adminName,
+      password,
+    },
+    create: {
+      email: adminEmail,
+      name: adminName,
+      password,
+    },
+  });
+
   console.log(`Seeded administrator: ${administrator.email}`);
+  console.log(`Seeded user: ${user.email}`);
 }
 
 main()
