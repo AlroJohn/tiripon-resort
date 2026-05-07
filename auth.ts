@@ -43,7 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const administrator = await prisma.administrator.findUnique({
+        const administrator = await prisma.user.findUnique({
           where: { email },
         });
 
