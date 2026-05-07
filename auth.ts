@@ -13,6 +13,7 @@ async function verifyPassword(password: string, storedPassword: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   secret:
     process.env.AUTH_SECRET ??
     process.env.NEXTAUTH_SECRET ??
@@ -43,15 +44,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const administrator = await prisma.user.findUnique({
+        const account = await prisma.user.findUnique({
           where: { email },
         });
-
-        const account =
-          administrator ??
-          (await prisma.user.findUnique({
-            where: { email },
-          }));
 
         if (!account) {
           return null;
