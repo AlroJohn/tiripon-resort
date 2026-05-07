@@ -13,9 +13,9 @@ function isBookingPayload(value: unknown): value is BookingRequestPayload {
     payload.name.trim().length > 0 &&
     (payload.email === undefined || typeof payload.email === "string") &&
     (payload.phone === undefined || typeof payload.phone === "string") &&
-    Array.isArray(payload.cottages) &&
-    payload.cottages.length > 0 &&
-    payload.cottages.every(
+    Array.isArray(payload.cottage) &&
+    payload.cottage.length > 0 &&
+    payload.cottage.every(
       (cottage) =>
         cottage &&
         typeof cottage === "object" &&
@@ -26,22 +26,15 @@ function isBookingPayload(value: unknown): value is BookingRequestPayload {
         Number.isFinite(cottage.price) &&
         cottage.price >= 0,
     ) &&
-    typeof payload.checkInDate === "string" &&
-    payload.checkInDate.length > 0 &&
-    typeof payload.checkInTime === "string" &&
-    payload.checkInTime.length > 0 &&
-    typeof payload.children === "number" &&
-    Number.isInteger(payload.children) &&
-    payload.children >= 0 &&
-    typeof payload.olderGuests === "number" &&
-    Number.isInteger(payload.olderGuests) &&
-    payload.olderGuests >= 0 &&
-    typeof payload.entranceTotal === "number" &&
-    Number.isFinite(payload.entranceTotal) &&
-    payload.entranceTotal >= 0 &&
-    typeof payload.totalPrice === "number" &&
-    Number.isFinite(payload.totalPrice) &&
-    payload.totalPrice >= 0 &&
+    typeof payload.number_of_kids === "string" &&
+    /^\d+$/.test(payload.number_of_kids) &&
+    typeof payload.number_of_adult === "string" &&
+    /^\d+$/.test(payload.number_of_adult) &&
+    typeof payload.total_price === "number" &&
+    Number.isFinite(payload.total_price) &&
+    payload.total_price >= 0 &&
+    (payload.checkIn === undefined || typeof payload.checkIn === "string") &&
+    (payload.checkOut === undefined || typeof payload.checkOut === "string") &&
     (payload.summary === undefined || typeof payload.summary === "string")
   );
 }
@@ -62,52 +55,49 @@ export async function POST(request: Request) {
     );
   }
 
-  const expectedTotal = body.children * 30 + body.olderGuests * 50;
-
-  if (body.entranceTotal !== expectedTotal) {
-    return Response.json(
-      { error: "Booking total does not match guest pricing." },
-      { status: 400 },
-    );
-  }
-
-  const cottageTotal = body.cottages.reduce(
+  const numberOfKids = Number(body.number_of_kids);
+  const numberOfAdults = Number(body.number_of_adult);
+  const expectedEntranceTotal = numberOfKids * 30 + numberOfAdults * 50;
+  const cottageTotal = body.cottage.reduce(
     (sum, cottage) => sum + cottage.price,
     0,
   );
 
-  if (body.totalPrice !== expectedTotal + cottageTotal) {
+  if (body.total_price !== expectedEntranceTotal + cottageTotal) {
     return Response.json(
-      { error: "Booking total does not match selected cottages." },
+      { error: "Booking total does not match selected guests and cottages." },
       { status: 400 },
     );
   }
 
-  const checkIn = new Date(`${body.checkInDate} ${body.checkInTime}`);
+  const checkIn = body.checkIn ? new Date(body.checkIn) : null;
 
-  if (Number.isNaN(checkIn.getTime())) {
+  if (checkIn && Number.isNaN(checkIn.getTime())) {
     return Response.json(
-      { error: "Invalid check-in date or arrival time." },
+      { error: "Invalid check-in date." },
       { status: 400 },
     );
   }
 
-  const checkOut = new Date(checkIn);
-  checkOut.setHours(17, 30, 0, 0);
+  const checkOut = body.checkOut ? new Date(body.checkOut) : null;
+
+  if (checkOut && Number.isNaN(checkOut.getTime())) {
+    return Response.json({ error: "Invalid checkout date." }, { status: 400 });
+  }
 
   const booking = await prisma.booking.create({
     data: {
       name: body.name.trim(),
       email: body.email?.trim() || null,
       phone: body.phone?.trim() || null,
-      number_of_adult: String(body.olderGuests),
-      number_of_kids: String(body.children),
-      total_price: body.totalPrice,
+      number_of_adult: body.number_of_adult,
+      number_of_kids: body.number_of_kids,
+      total_price: body.total_price,
       summary: body.summary?.trim() || null,
       checkIn,
       checkOut,
       cottage: {
-        create: body.cottages.map((cottage) => ({
+        create: body.cottage.map((cottage) => ({
           name: cottage.name,
           description: cottage.description,
           price: cottage.price,

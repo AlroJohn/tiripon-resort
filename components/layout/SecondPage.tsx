@@ -189,18 +189,21 @@ export default function SecondPage() {
         name,
         email,
         phone,
-        cottages: selectedCottages.map<SelectedCottage>((cottage) => ({
+        cottage: selectedCottages.map<SelectedCottage>((cottage) => ({
           name: cottage.name,
           description: cottage.description,
           price: cottage.price,
         })),
-        checkInDate: date.toISOString().slice(0, 10),
-        checkInTime,
-        children,
-        olderGuests,
-        entranceTotal: total,
-        totalPrice: bookingTotal,
+        number_of_adult: String(olderGuests),
+        number_of_kids: String(children),
+        total_price: bookingTotal,
         summary: `${children} kids, ${olderGuests} adults, ${selectedCottages.length} cottage(s) selected.`,
+        checkIn: new Date(
+          `${date.toISOString().slice(0, 10)} ${checkInTime}`,
+        ).toISOString(),
+        checkOut: new Date(
+          `${date.toISOString().slice(0, 10)} 5:30 PM`,
+        ).toISOString(),
       });
       setIsBookingModalOpen(false);
       toast.success(result.message, {

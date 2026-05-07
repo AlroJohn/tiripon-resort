@@ -8,14 +8,13 @@ export type BookingRequestPayload = {
   name: string;
   email?: string;
   phone?: string;
-  cottages: SelectedCottage[];
-  checkInDate: string;
-  checkInTime: string;
-  children: number;
-  olderGuests: number;
-  entranceTotal: number;
-  totalPrice: number;
+  cottage: SelectedCottage[];
+  number_of_adult: string;
+  number_of_kids: string;
+  total_price: number;
   summary?: string;
+  checkIn?: string;
+  checkOut?: string;
 };
 
 export type BookingResponse = {
