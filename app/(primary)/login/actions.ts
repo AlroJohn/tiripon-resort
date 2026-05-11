@@ -23,7 +23,7 @@ export async function login(
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/admin",
+      redirectTo: "/bookings",
     });
   } catch (error) {
     if (error instanceof AuthError) {

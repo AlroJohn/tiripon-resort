@@ -63,10 +63,12 @@ export default function Header() {
   const lastScrollYRef = useRef(0);
   const [showHeader, setShowHeader] = useState(true);
   const [useLightHeader, setUseLightHeader] = useState(true);
+  const [isAtTop, setIsAtTop] = useState(true);
 
   useEffect(() => {
     const updateHeaderVisibility = () => {
       const currentScrollY = window.scrollY;
+      setIsAtTop(currentScrollY <= 4);
 
       if (currentScrollY <= 4) {
         setShowHeader(true);
@@ -153,13 +155,21 @@ export default function Header() {
   const headerTextColor = useLightHeader
     ? "text-accent"
     : "text-accent-foreground";
+  const resolvedHeaderTextColor = isAtTop
+    ? "text-accent-foreground"
+    : headerTextColor;
   const separatorColor = useLightHeader
     ? "border-accent"
     : "border-accent-foreground";
+  const resolvedSeparatorColor = isAtTop ? "border-accent-foreground" : separatorColor;
   const separatorBackground = useLightHeader
     ? "bg-accent/30"
     : "bg-accent-foreground/30";
-  const logoSrc = useLightHeader ? "/logo/logo-white.png" : "/logo/logo.png";
+  const resolvedSeparatorBackground = isAtTop
+    ? "bg-accent-foreground/30"
+    : separatorBackground;
+  const logoSrc =
+    isAtTop || !useLightHeader ? "/logo/logo.png" : "/logo/logo-white.png";
 
   return (
     <header
@@ -174,16 +184,16 @@ export default function Header() {
     >
       <nav className="mx-auto w-full max-w-[90dvw] rounded-2xl px-0 py-3 md:px-6 md:py-4">
         <ul
-          className={`flex flex-row ${headerTextColor} items-center justify-between uppercase transition-colors duration-300`}
+          className={`flex flex-row ${resolvedHeaderTextColor} items-center justify-between uppercase transition-colors duration-300`}
         >
           {/* Menu */}
           <li className="flex items-center md:gap-4 gap-2">
             <Button
-              className={`bg-white/5 md:p-4 border-none rounded-none cursor-pointer uppercase text-sm md:text-lg font-thin ${headerTextColor}`}
+              className={`bg-white/5 md:p-4 border-none rounded-none cursor-pointer uppercase text-sm md:text-lg font-thin ${resolvedHeaderTextColor}`}
             >
               <div className="w-8 md:w-10 flex flex-col gap-2">
-                <Separator className={`border ${separatorColor}`} />
-                <Separator className={`border ${separatorColor}`} />
+                <Separator className={`border ${resolvedSeparatorColor}`} />
+                <Separator className={`border ${resolvedSeparatorColor}`} />
               </div>
               <h1>Menu</h1>
             </Button>
@@ -212,7 +222,7 @@ export default function Header() {
 
             <Separator
               orientation="vertical"
-              className={`h-5 ${separatorBackground}`}
+              className={`h-5 ${resolvedSeparatorBackground}`}
             />
 
             <a
