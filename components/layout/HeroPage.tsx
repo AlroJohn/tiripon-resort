@@ -31,7 +31,7 @@ export default function HeroPage() {
       <motion.img
         src="/images/mayones.png"
         alt=""
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover bg-no-repeat"
         initial={{ scale: 1.08 }}
         animate={{ scale: 1 }}
         transition={{ duration: 1.4, ease: "easeOut" }}
@@ -40,53 +40,14 @@ export default function HeroPage() {
       {/* Overlay */}
       <div className="absolute inset-0 z-10 ">
         <div className="z-10 w-full h-full  flex flex-row justify-between items-center">
-          <div className="h-full w-full md:relative md:block hidden">
-            <motion.div
-              className="p-4 md:absolute rounded md:bottom-30 md:left-24 z-50 flex md:h-[25dvh] md:max-w-[25dvw] w-full items-center justify-center bg-white/10 shadow-lg backdrop-blur-sm"
-              initial={{ opacity: 0, x: 36 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.65, duration: 0.75, ease: "easeOut" }}
-            >
-              <div className="w-full h-full flex flex-row items-center capitalize gap-4 p-4">
-                <h3 className="text-xl font-googlesansflex text-accent max-w-72">
-                  Watch a video about us
-                </h3>
-                <div className="w-full h-full rounded overflow-hidden">
-                  <video
-                    src="/examples/vid-1.mp4"
-                    controls
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          </div>
           <div className="relative h-full w-full">
             {/* Blur/fade overlay only */}
             {/* <div className="absolute inset-0 bg-black/30 md:backdrop-blur-sm md:[mask-image:linear-gradient(to_right,black_55%,transparent)] md:[-webkit-mask-image:linear-gradient(to_right,black_90%,transparent)]" /> */}
 
             {/* Content stays fully visible */}
-            <div className="relative flex h-full w-full items-center md:items-end md:justify-end justify-start">
-              <svg
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-0 h-full w-full text-till"
-                viewBox="0 0 720 900"
-                preserveAspectRatio="none"
-              >
-                {/* Wave guide:
-                    1) `M-10 0`   -> top-left start (moves top wave width left/right)
-                    2) `H720V900` -> fills the full right-side panel area
-                    3) `H270...C...706` -> bottom section width and lower wave bulge
-                    4) `C...523` -> middle wave bend around heading/paragraph zone
-                    5) `C...348` -> upper-middle transition into the top curve
-                    6) `... -10 0Z` -> closes path back to top start point */}
-                <path
-                  className="fill-current"
-                  d="M-10 8 H720V900H270C218 842 182 781 214 706C247 627 337 592 314 523C291 454 169 427 120 348C80 257 50 100 100 0Z"
-                />
-              </svg>
+            <div className="relative flex h-full w-full items-center justify-start">
               <motion.div
-                className="my-auto z-10 flex h-full max-h-[60dvh] flex-col md:items-end md:text-right justify-around gap-12 px-[5dvw]"
+                className="my-auto z-10 flex h-full max-h-[40dvh]  flex-col justify-around gap-4 px-[5dvw]"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -119,7 +80,7 @@ export default function HeroPage() {
                 </motion.h1>
 
                 <motion.p
-                  className="text-cream w-full md:max-w-[25dvw] rounded p-4 md:text-xl text-lg font-googlesansflex"
+                  className="text-cream w-full md:max-w-[35dvw] rounded p-4 md:text-xl text-lg font-googlesansflex"
                   style={{ textShadow: "0 2px 8px rgba(0,0,0,1)" }}
                   variants={{
                     hidden: { opacity: 0, y: 26 },
@@ -159,6 +120,27 @@ export default function HeroPage() {
                 </motion.div>
               </motion.div>
             </div>
+          </div>
+          <div className="h-full w-full md:relative md:block hidden">
+            {/* <motion.div
+              className="p-4 md:absolute rounded md:bottom-30 md:left-24 z-50 flex md:h-[25dvh] md:max-w-[25dvw] w-full items-center justify-center bg-white/10 shadow-lg backdrop-blur-sm"
+              initial={{ opacity: 0, x: 36 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.65, duration: 0.75, ease: "easeOut" }}
+            >
+              <div className="w-full h-full flex flex-row items-center capitalize gap-4 p-4">
+                <h3 className="text-xl font-googlesansflex text-accent max-w-72">
+                  Watch a video about us
+                </h3>
+                <div className="w-full h-full rounded overflow-hidden">
+                  <video
+                    src="/examples/vid-1.mp4"
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </motion.div> */}
           </div>
         </div>
       </div>

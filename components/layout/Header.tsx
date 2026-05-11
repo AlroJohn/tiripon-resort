@@ -161,7 +161,9 @@ export default function Header() {
   const separatorColor = useLightHeader
     ? "border-accent"
     : "border-accent-foreground";
-  const resolvedSeparatorColor = isAtTop ? "border-accent-foreground" : separatorColor;
+  const resolvedSeparatorColor = isAtTop
+    ? "border-accent-foreground"
+    : separatorColor;
   const separatorBackground = useLightHeader
     ? "bg-accent/30"
     : "bg-accent-foreground/30";
@@ -201,19 +203,21 @@ export default function Header() {
 
           {/* Logo */}
           <li>
-            <Image
-              src={logoSrc}
-              alt="Logo"
-              width={180}
-              height={72}
-              className="h-7 w-auto md:h-8"
-              priority
-            />
+            <a href="/tiripon-resort">
+              <Image
+                src={logoSrc}
+                alt="Logo"
+                width={180}
+                height={72}
+                className="h-7 w-auto md:h-8"
+                priority
+              />
+            </a>
           </li>
 
           {/* Desktop only */}
           <li className="hidden md:flex items-center gap-4 justify-center text-lg bg-white/5 px-4">
-            <a
+            {/* <a
               href="/contact"
               className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full"
             >
@@ -223,7 +227,7 @@ export default function Header() {
             <Separator
               orientation="vertical"
               className={`h-5 ${resolvedSeparatorBackground}`}
-            />
+            /> */}
 
             <a
               href="/login"

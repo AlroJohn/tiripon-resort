@@ -7,9 +7,9 @@ import VideoPage from "@/components/layout/VideoPage";
 export default function Home() {
   return (
     <main className=" min-h-dvh">
-      <SecondPage />
-      <VideoPage />
       <HeroPage />
+      <VideoPage />
+      <SecondPage />
       <ThirdPage />
       <FourthPage />
     </main>

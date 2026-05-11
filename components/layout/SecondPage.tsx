@@ -384,7 +384,7 @@ export default function SecondPage() {
             </div>
           </label>
 
-          <div className="grid grid-cols-[1fr_auto] overflow-hidden bg-tan text-brown md:grid-cols-1">
+          <div className="md:grid flex flex-col overflow-hidden bg-tan text-brown md:grid-cols-1">
             <div className="flex flex-col justify-center px-5 py-4">
               <span className="font-googlesansflex text-sm font-semibold uppercase">
                 Total Entrance Fee
@@ -396,7 +396,7 @@ export default function SecondPage() {
             </div>
             <Button
               type="submit"
-              className="h-full rounded-none bg-green/30 px-5 text-brown shadow-none hover:bg-khaki md:h-auto md:min-h-16"
+              className="h-16 rounded-none bg-green/30 px-5 text-brown shadow-none hover:bg-khaki md:h-auto md:min-h-16"
             >
               Search and Select Cottages
             </Button>
