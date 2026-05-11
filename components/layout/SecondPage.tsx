@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -11,10 +11,9 @@ import { DatePicker } from "./DatePicker";
 import { Button } from "../ui/button";
 import {
   Carousel,
+  type CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "../ui/carousel";
 import {
   Dialog,
@@ -123,6 +122,8 @@ export default function SecondPage() {
   const [children, setChildren] = useState(0);
   const [olderGuests, setOlderGuests] = useState(0);
   const [formError, setFormError] = useState<string | null>(null);
+  const [cottageCarouselApi, setCottageCarouselApi] =
+    useState<CarouselApi | null>(null);
 
   const total = useMemo(
     () => children * 30 + olderGuests * 50,
@@ -206,7 +207,8 @@ export default function SecondPage() {
         ).toISOString(),
       });
       setIsBookingModalOpen(false);
-      toast.success(result.message, {
+      toast.success("Booking request created", {
+        description: result.message,
         duration: 3500,
       });
     } catch {
@@ -426,6 +428,7 @@ export default function SecondPage() {
 
                   <Carousel
                     opts={{ align: "start", loop: true }}
+                    setApi={(api) => setCottageCarouselApi(api ?? null)}
                     className="mt-6"
                   >
                     <CarouselContent>
@@ -513,14 +516,34 @@ export default function SecondPage() {
                         );
                       })}
                     </CarouselContent>
-                    <CarouselPrevious
+                    <Button
                       type="button"
-                      className="left-2 bg-white text-brown"
-                    />
-                    <CarouselNext
+                      size="icon-lg"
+                      variant="outline"
+                      aria-label="Previous cottage"
+                      className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white text-brown shadow-lg shadow-brown/15"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        cottageCarouselApi?.scrollPrev();
+                      }}
+                    >
+                      <ChevronLeft />
+                    </Button>
+                    <Button
                       type="button"
-                      className="right-2 bg-white text-brown"
-                    />
+                      size="icon-lg"
+                      variant="outline"
+                      aria-label="Next cottage"
+                      className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white text-brown shadow-lg shadow-brown/15"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        cottageCarouselApi?.scrollNext();
+                      }}
+                    >
+                      <ChevronRight />
+                    </Button>
                   </Carousel>
                 </div>
 

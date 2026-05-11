@@ -14,7 +14,7 @@ export default function PrimaryLayout({
       </div>
       {children}
       <Footer />
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-right" />
     </section>
   );
 }

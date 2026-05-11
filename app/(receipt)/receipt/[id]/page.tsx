@@ -56,6 +56,11 @@ export default async function ReceiptPage({
   `;
   const expiresAt = new Date(receipt.createdAt.getTime() + RECEIPT_LINK_TTL_MS);
   const isExpired = databaseTime.now.getTime() > expiresAt.getTime();
+
+  if (isExpired && receipt.status !== "paid") {
+    notFound();
+  }
+
   const isPaid = receipt.status === "paid";
 
   return (
