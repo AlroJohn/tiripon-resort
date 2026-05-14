@@ -12,7 +12,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -60,19 +59,20 @@ model Booking {
 }
 
 model Receipt {
-  id                Int      @id @default(autoincrement())
-  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  bookingId         Int      @unique
-  downPaymentAmount Float
-  status            String   @default("pending")
-  proofFilePath     String?
-  proofFileName     String?
-  proofMimeType     String?
-  proofViewUrl      String?
-  proofUploadedAt   DateTime?
-  paidAt            DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                   Int       @id @default(autoincrement())
+  booking              Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId            Int       @unique
+  downPaymentAmount    Float
+  status               String    @default("pending")
+  receipt_confirmation Boolean?  @default(false)
+  proofFilePath        String?
+  proofFileName        String?
+  proofMimeType        String?
+  proofViewUrl         String?
+  proofUploadedAt      DateTime?
+  paidAt               DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@map("receipts")
 }

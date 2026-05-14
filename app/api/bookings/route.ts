@@ -3,6 +3,61 @@ import { sendReservationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 const CHECKOUT_TIME = "5:30 PM";
+const PAGE_SIZE = 10;
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+  }).format(value);
+}
+
+function formatDate(value: Date | null) {
+  if (!value) return "Not set";
+
+  return new Intl.DateTimeFormat("en-PH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
+}
+
+function getBookingDayRange(value: Date) {
+  const start = new Date(value);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  return { start, end };
+}
+
+async function getPaidCottageNamesForDay(date: Date) {
+  const { start, end } = getBookingDayRange(date);
+  const paidBookings = await prisma.booking.findMany({
+    where: {
+      checkIn: {
+        gte: start,
+        lt: end,
+      },
+      receipt: {
+        status: "paid",
+      },
+    },
+    select: {
+      cottage: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  return new Set(
+    paidBookings.flatMap((booking) =>
+      booking.cottage.map((cottage) => cottage.name),
+    ),
+  );
+}
 
 function isBookingPayload(value: unknown): value is BookingRequestPayload {
   if (!value || typeof value !== "object") return false;
@@ -88,6 +143,22 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid checkout date." }, { status: 400 });
   }
 
+  if (checkIn) {
+    const paidCottageNames = await getPaidCottageNamesForDay(checkIn);
+    const unavailableCottage = body.cottage.find((cottage) =>
+      paidCottageNames.has(cottage.name),
+    );
+
+    if (unavailableCottage) {
+      return Response.json(
+        {
+          error: `${unavailableCottage.name} is already paid and reserved for this date.`,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const downPaymentAmount = body.total_price * 0.5;
   const booking = await prisma.booking.create({
     data: {
@@ -151,4 +222,78 @@ export async function POST(request: Request) {
     },
     { status: 201 },
   );
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const availabilityDate = searchParams.get("availabilityDate");
+
+  if (availabilityDate) {
+    const date = new Date(`${availabilityDate}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) {
+      return Response.json({ error: "Invalid availability date." }, { status: 400 });
+    }
+
+    const paidCottageNames = await getPaidCottageNamesForDay(date);
+
+    return Response.json({
+      unavailableCottageNames: Array.from(paidCottageNames),
+    });
+  }
+
+  const page = Math.max(Number(searchParams.get("page") ?? "1") || 1, 1);
+  const skip = (page - 1) * PAGE_SIZE;
+
+  const bookings = await prisma.booking.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip,
+    take: PAGE_SIZE,
+    include: {
+      cottage: {
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+      receipt: true,
+    },
+  });
+
+  const rows = bookings.map((booking) => ({
+    id: booking.id,
+    name: booking.name,
+    email: booking.email,
+    phone: booking.phone,
+    numberOfAdults: booking.number_of_adult,
+    numberOfKids: booking.number_of_kids,
+    totalPrice: formatCurrency(booking.total_price),
+    summary: booking.summary,
+    checkIn: formatDate(booking.checkIn),
+    checkOut: formatDate(booking.checkOut),
+    createdAt: formatDate(booking.createdAt),
+    cottages: booking.cottage.map((cottage) => ({
+      id: cottage.id,
+      name: cottage.name,
+      description: cottage.description,
+      price: formatCurrency(cottage.price),
+    })),
+    receipt: booking.receipt
+      ? {
+          id: booking.receipt.id,
+          status: booking.receipt.status,
+          receiptConfirmation: Boolean(booking.receipt.receipt_confirmation),
+          downPaymentAmount: formatCurrency(booking.receipt.downPaymentAmount),
+          proofFileName: booking.receipt.proofFileName,
+          proofMimeType: booking.receipt.proofMimeType,
+          proofViewUrl: booking.receipt.proofViewUrl,
+          proofUploadedAt: formatDate(booking.receipt.proofUploadedAt),
+          paidAt: formatDate(booking.receipt.paidAt),
+          createdAt: formatDate(booking.receipt.createdAt),
+        }
+      : null,
+  }));
+
+  return Response.json({ rows });
 }

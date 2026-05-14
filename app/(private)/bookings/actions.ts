@@ -37,15 +37,12 @@ export async function confirmReceipt(receiptId: number) {
     throw new Error("Invalid receipt id.");
   }
 
-  const now = new Date();
-
   await prisma.receipt.update({
     where: {
       id: receiptId,
     },
     data: {
-      status: "paid",
-      paidAt: now,
+      receipt_confirmation: true,
     },
   });
 

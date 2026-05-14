@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Check, ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useBookingRequest } from "@/hooks/use-booking-request";
 import type { SelectedCottage } from "@/lib/booking-types";
@@ -137,6 +137,20 @@ export default function SecondPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [cottageCarouselApi, setCottageCarouselApi] =
     useState<CarouselApi | null>(null);
+  const [unavailableCottageNames, setUnavailableCottageNames] = useState<
+    string[]
+  >([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+
+  const selectedDateKey = useMemo(() => {
+    if (!date) return null;
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }, [date]);
 
   const total = useMemo(
     () => children * 30 + olderGuests * 50,
@@ -154,6 +168,55 @@ export default function SecondPage() {
   );
 
   const bookingTotal = total + cottageTotal;
+  const unavailableCottageNameSet = useMemo(
+    () => new Set(unavailableCottageNames),
+    [unavailableCottageNames],
+  );
+
+  useEffect(() => {
+    if (!selectedDateKey) {
+      setUnavailableCottageNames([]);
+      return;
+    }
+
+    let isActive = true;
+    setIsCheckingAvailability(true);
+
+    void fetch(`/api/bookings?availabilityDate=${selectedDateKey}`, {
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { unavailableCottageNames?: string[] } | null) => {
+        if (!isActive) return;
+
+        const unavailableNames = Array.isArray(data?.unavailableCottageNames)
+          ? data.unavailableCottageNames
+          : [];
+
+        setUnavailableCottageNames(unavailableNames);
+        setSelectedCottageIds((current) =>
+          current.filter((id) => {
+            const cottage = cottages.find((item) => item.id === id);
+
+            return cottage ? !unavailableNames.includes(cottage.name) : false;
+          }),
+        );
+      })
+      .catch(() => {
+        if (isActive) {
+          setUnavailableCottageNames([]);
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsCheckingAvailability(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedDateKey]);
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -174,6 +237,12 @@ export default function SecondPage() {
   };
 
   const toggleCottage = (cottageId: string) => {
+    const cottage = cottages.find((item) => item.id === cottageId);
+
+    if (cottage && unavailableCottageNameSet.has(cottage.name)) {
+      return;
+    }
+
     setSelectedCottageIds((current) =>
       current.includes(cottageId)
         ? current.filter((id) => id !== cottageId)
@@ -184,7 +253,7 @@ export default function SecondPage() {
   const handleBookingSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!date) {
+    if (!date || !selectedDateKey) {
       setFormError("Please select your check-in date.");
       setIsBookingModalOpen(false);
       return;
@@ -192,6 +261,17 @@ export default function SecondPage() {
 
     if (selectedCottages.length < 1) {
       setFormError("Please select at least one cottage.");
+      return;
+    }
+
+    const unavailableSelectedCottage = selectedCottages.find((cottage) =>
+      unavailableCottageNameSet.has(cottage.name),
+    );
+
+    if (unavailableSelectedCottage) {
+      setFormError(
+        `${unavailableSelectedCottage.name} is already paid and reserved for this date.`,
+      );
       return;
     }
 
@@ -211,12 +291,8 @@ export default function SecondPage() {
         number_of_kids: String(children),
         total_price: bookingTotal,
         summary: `${children} kids, ${olderGuests} adults, ${selectedCottages.length} cottage(s) selected.`,
-        checkIn: new Date(
-          `${date.toISOString().slice(0, 10)} ${checkInTime}`,
-        ).toISOString(),
-        checkOut: new Date(
-          `${date.toISOString().slice(0, 10)} 5:30 PM`,
-        ).toISOString(),
+        checkIn: new Date(`${selectedDateKey} ${checkInTime}`).toISOString(),
+        checkOut: new Date(`${selectedDateKey} 5:30 PM`).toISOString(),
       });
       setIsBookingModalOpen(false);
       toast.success("Booking request created", {
@@ -435,6 +511,9 @@ export default function SecondPage() {
                     <DialogDescription className="font-googlesansflex text-brown/65">
                       Review the cabana image, rate, and capacity before
                       selecting one or more cottages for your booking.
+                      {isCheckingAvailability
+                        ? " Checking paid reservations for this date..."
+                        : ""}
                     </DialogDescription>
                   </DialogHeader>
 
@@ -448,6 +527,9 @@ export default function SecondPage() {
                         const isSelected = selectedCottageIds.includes(
                           cottage.id,
                         );
+                        const isUnavailable = unavailableCottageNameSet.has(
+                          cottage.name,
+                        );
 
                         return (
                           <CarouselItem
@@ -457,17 +539,22 @@ export default function SecondPage() {
                             <motion.button
                               type="button"
                               onClick={() => toggleCottage(cottage.id)}
-                              whileHover={{ y: -3 }}
-                              whileTap={{ scale: 0.985 }}
+                              disabled={isUnavailable}
+                              whileHover={isUnavailable ? undefined : { y: -3 }}
+                              whileTap={
+                                isUnavailable ? undefined : { scale: 0.985 }
+                              }
                               transition={{
                                 type: "spring",
                                 stiffness: 360,
                                 damping: 28,
                               }}
-                              className={`block w-full overflow-hidden border bg-cream text-left transition ${
-                                isSelected
-                                  ? "border-brown shadow-xl shadow-brown/15"
-                                  : "border-brown/15 shadow-sm hover:border-brown/45 hover:shadow-lg hover:shadow-brown/10"
+                              className={`block w-full overflow-hidden border bg-cream text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                isUnavailable
+                                  ? "border-brown/10 grayscale"
+                                  : isSelected
+                                    ? "border-brown shadow-xl shadow-brown/15"
+                                    : "border-brown/15 shadow-sm hover:border-brown/45 hover:shadow-lg hover:shadow-brown/10"
                               }`}
                             >
                               <div className="relative aspect-[4/3] w-full overflow-hidden">
@@ -525,7 +612,11 @@ export default function SecondPage() {
                                   className="absolute right-3 top-3 flex size-9 items-center justify-center bg-white text-brown shadow"
                                   animate={{
                                     scale: isSelected ? 1 : 0.92,
-                                    opacity: isSelected ? 1 : 0.86,
+                                    opacity: isUnavailable
+                                      ? 0.7
+                                      : isSelected
+                                        ? 1
+                                        : 0.86,
                                   }}
                                   transition={{
                                     type: "spring",
@@ -549,6 +640,11 @@ export default function SecondPage() {
                                     <span className="size-4 border border-brown/45" />
                                   )}
                                 </motion.span>
+                                {isUnavailable && (
+                                  <span className="absolute inset-x-3 bottom-3 bg-brown px-3 py-2 text-center font-googlesansflex text-xs font-semibold uppercase tracking-wide text-cream shadow">
+                                    Paid for this date
+                                  </span>
+                                )}
                               </div>
                               <div className="grid gap-3 p-4">
                                 <div className="flex items-start justify-between gap-4">

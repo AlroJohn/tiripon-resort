@@ -83,8 +83,10 @@ export default async function AdminPage({
       ? {
           id: booking.receipt.id,
           status: booking.receipt.status,
+          receiptConfirmation: Boolean(booking.receipt.receipt_confirmation),
           downPaymentAmount: formatCurrency(booking.receipt.downPaymentAmount),
           proofFileName: booking.receipt.proofFileName,
+          proofMimeType: booking.receipt.proofMimeType,
           proofViewUrl: booking.receipt.proofViewUrl,
           proofUploadedAt: formatDate(booking.receipt.proofUploadedAt),
           paidAt: formatDate(booking.receipt.paidAt),
@@ -102,7 +104,7 @@ export default async function AdminPage({
         </p>
       </div>
 
-      <BookingsTable bookings={rows} />
+      <BookingsTable bookings={rows} currentPage={currentPage} />
 
       <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>

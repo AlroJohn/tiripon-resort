@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   CheckCircle2,
   Eye,
   MoreHorizontal,
   ReceiptText,
   Trash2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 
 import {
@@ -48,6 +49,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 
 type BookingRow = {
   id: number;
@@ -70,8 +72,10 @@ type BookingRow = {
   receipt: {
     id: number;
     status: string;
+    receiptConfirmation: boolean;
     downPaymentAmount: string;
     proofFileName: string | null;
+    proofMimeType: string | null;
     proofViewUrl: string | null;
     proofUploadedAt: string;
     paidAt: string;
@@ -81,9 +85,10 @@ type BookingRow = {
 
 type BookingsTableProps = {
   bookings: BookingRow[];
+  currentPage?: number;
 };
 
-export function BookingsTable({ bookings }: BookingsTableProps) {
+export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps) {
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(
     null,
   );
@@ -93,7 +98,92 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
   const [receiptToConfirm, setReceiptToConfirm] = useState<BookingRow | null>(
     null,
   );
+  const [proofToView, setProofToView] = useState<{
+    name: string;
+    url: string;
+    mimeType: string | null;
+  } | null>(null);
+  const [proofZoom, setProofZoom] = useState(1);
   const [isPending, startTransition] = useTransition();
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [isRealtimeSubscribed, setIsRealtimeSubscribed] = useState(false);
+  const [rows, setRows] = useState<BookingRow[]>(bookings);
+
+  useEffect(() => {
+    setRows(bookings);
+  }, [bookings]);
+
+  useEffect(() => {
+    const refreshRows = async () => {
+      try {
+        const response = await fetch(`/api/bookings?page=${currentPage}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { rows?: BookingRow[] };
+
+        if (Array.isArray(data.rows)) {
+          setRows(data.rows);
+        }
+      } catch {
+        // Keep existing rows if fetch fails.
+      }
+    };
+
+    const channel = supabase
+      .channel("admin-bookings-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        refreshRows,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "receipts" },
+        refreshRows,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cottages" },
+        refreshRows,
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setIsRealtimeSubscribed(true);
+          return;
+        }
+
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setIsRealtimeSubscribed(false);
+          console.error("Supabase realtime status:", status);
+        }
+      });
+
+    return () => {
+      setIsRealtimeSubscribed(false);
+      void supabase.removeChannel(channel);
+    };
+  }, [currentPage, supabase]);
+
+  useEffect(() => {
+    const interval = setInterval(
+      () => {
+        void fetch(`/api/bookings?page=${currentPage}`, {
+          cache: "no-store",
+        })
+          .then((response) => (response.ok ? response.json() : null))
+          .then((data: { rows?: BookingRow[] } | null) => {
+            if (data?.rows) setRows(data.rows);
+          })
+          .catch(() => null);
+      },
+      isRealtimeSubscribed ? 30000 : 10000,
+    );
+
+    return () => clearInterval(interval);
+  }, [currentPage, isRealtimeSubscribed]);
 
   return (
     <>
@@ -113,7 +203,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {bookings.length === 0 ? (
+            {rows.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
@@ -123,7 +213,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              bookings.map((booking) => (
+              rows.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell>
                     <div className="font-medium">{booking.name}</div>
@@ -154,15 +244,30 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                     {booking.totalPrice}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        booking.receipt?.status === "paid"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {booking.receipt?.status ?? "missing"}
-                    </Badge>
+                    <div className="flex flex-col items-start gap-1">
+                      <Badge
+                        variant={
+                          booking.receipt?.status === "paid"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {booking.receipt?.status ?? "missing"}
+                      </Badge>
+                      {booking.receipt && (
+                        <Badge
+                          variant={
+                            booking.receipt.receiptConfirmation
+                              ? "outline"
+                              : "secondary"
+                          }
+                        >
+                          {booking.receipt.receiptConfirmation
+                            ? "confirmed"
+                            : "unconfirmed"}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -180,7 +285,11 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                           View details
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          disabled={!booking.receipt}
+                          disabled={
+                            !booking.receipt ||
+                            booking.receipt.status !== "paid" ||
+                            booking.receipt.receiptConfirmation
+                          }
                           onSelect={() => setReceiptToConfirm(booking)}
                         >
                           <CheckCircle2 />
@@ -208,7 +317,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
         open={Boolean(selectedBooking)}
         onOpenChange={(open) => !open && setSelectedBooking(null)}
       >
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
           {selectedBooking && (
             <>
               <DialogHeader>
@@ -265,6 +374,14 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                           value={selectedBooking.receipt.status}
                         />
                         <Detail
+                          label="Admin confirmation"
+                          value={
+                            selectedBooking.receipt.receiptConfirmation
+                              ? "Confirmed"
+                              : "Unconfirmed"
+                          }
+                        />
+                        <Detail
                           label="Down payment"
                           value={selectedBooking.receipt.downPaymentAmount}
                         />
@@ -278,14 +395,27 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                         />
                         <div className="sm:col-span-2">
                           {selectedBooking.receipt.proofViewUrl ? (
-                            <Button asChild variant="outline" size="sm">
-                              <Link
-                                href={selectedBooking.receipt.proofViewUrl}
-                                target="_blank"
-                              >
-                                <ReceiptText />
-                                Open proof
-                              </Link>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (!selectedBooking.receipt?.proofViewUrl) {
+                                  return;
+                                }
+
+                                setProofToView({
+                                  name:
+                                    selectedBooking.receipt.proofFileName ??
+                                    `Receipt ${selectedBooking.receipt.id}`,
+                                  url: selectedBooking.receipt.proofViewUrl,
+                                  mimeType:
+                                    selectedBooking.receipt.proofMimeType,
+                                });
+                              }}
+                            >
+                              <ReceiptText />
+                              Open proof
                             </Button>
                           ) : (
                             <p className="text-muted-foreground">
@@ -305,21 +435,103 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={Boolean(proofToView)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProofToView(null);
+            setProofZoom(1);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[92dvh] overflow-y-auto p-0 sm:max-w-[92vw] lg:max-w-5xl">
+          {proofToView && (
+            <>
+              <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
+                <DialogHeader className="min-w-0">
+                  <DialogTitle>Receipt proof</DialogTitle>
+                  <DialogDescription className="truncate">
+                    {proofToView.name}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() =>
+                      setProofZoom((current) => Math.max(0.5, current - 0.1))
+                    }
+                  >
+                    <ZoomOut />
+                    <span className="sr-only">Zoom out</span>
+                  </Button>
+                  <span className="w-14 text-center text-sm tabular-nums text-muted-foreground">
+                    {Math.round(proofZoom * 100)}%
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() =>
+                      setProofZoom((current) => Math.min(2.5, current + 0.1))
+                    }
+                  >
+                    <ZoomIn />
+                    <span className="sr-only">Zoom in</span>
+                  </Button>
+                </div>
+              </div>
+              <div className="h-[68dvh] overflow-auto bg-muted/40 p-3 sm:h-[72dvh] sm:p-4">
+                {proofToView.mimeType === "application/pdf" ? (
+                  <iframe
+                    src={proofToView.url}
+                    title={proofToView.name}
+                    className="mx-auto h-full min-h-[60dvh] rounded-lg border bg-background"
+                    style={{
+                      width: `${100 / proofZoom}%`,
+                      transform: `scale(${proofZoom})`,
+                      transformOrigin: "top center",
+                    }}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={proofToView.url}
+                    alt={proofToView.name}
+                    className="mx-auto h-auto max-w-none rounded-lg border bg-background shadow-sm"
+                    style={{
+                      width: `${proofZoom * 100}%`,
+                    }}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog
         open={Boolean(receiptToConfirm)}
         onOpenChange={(open) => !open && setReceiptToConfirm(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm receipt?</AlertDialogTitle>
             <AlertDialogDescription>
-              This marks the receipt for {receiptToConfirm?.name} as paid.
+              This marks the receipt for {receiptToConfirm?.name} as manually
+              confirmed by admin.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2">
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              disabled={isPending || !receiptToConfirm?.receipt}
+              disabled={
+                isPending ||
+                !receiptToConfirm?.receipt ||
+                receiptToConfirm.receipt.status !== "paid" ||
+                receiptToConfirm.receipt.receiptConfirmation
+              }
               onClick={(event) => {
                 event.preventDefault();
                 if (!receiptToConfirm?.receipt) return;
@@ -343,7 +555,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
         open={Boolean(bookingToDelete)}
         onOpenChange={(open) => !open && setBookingToDelete(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete booking?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -351,7 +563,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
               including connected cottages and receipt.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2">
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
