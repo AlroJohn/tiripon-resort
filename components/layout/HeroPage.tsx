@@ -79,7 +79,7 @@ export default function HeroPage() {
                 >
                   Unlock your{" "}
                   <span className="flex items-center gap-4">
-                    <Separator className="max-w-16 border border-cream" />
+                    <Separator className="md:max-w-16 max-w-10 border border-cream" />
                     <span>best stays</span>
                   </span>
                 </motion.h1>

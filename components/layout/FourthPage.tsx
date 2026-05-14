@@ -144,7 +144,7 @@ export default function FourthPage() {
             >
               Guest Said About
               <span className="mt-2 flex items-center gap-5 md:gap-7">
-                <Separator className="max-w-20 border border-tan md:max-w-36" />
+                <Separator className="max-w-10 border border-tan md:max-w-24" />
                 <span>Our Resort</span>
               </span>
             </motion.h2>
