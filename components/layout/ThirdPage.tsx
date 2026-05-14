@@ -63,7 +63,7 @@ export default function ThirdPage() {
   const activeSlide = resortSlides[activeIndex] ?? resortSlides[0];
 
   return (
-    <section className="min-h-dvh w-full px-4 py-12 md:px-[5dvw] md:py-20">
+    <section className="min-h-dvh w-full px-4 py-10 sm:px-5 md:px-[5dvw] md:py-20">
       <motion.div
         className="mx-auto grid w-full max-w-[92rem] gap-10 md:grid-cols-[0.9fr_1.9fr]"
         initial="hidden"
@@ -79,7 +79,7 @@ export default function ThirdPage() {
         }}
       >
         <motion.aside
-          className="relative z-30 flex flex-col justify-between"
+          className="relative z-30 flex flex-col gap-6 rounded-2xl border border-brown/10 bg-cream/45 p-5 shadow-sm md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
           variants={{
             hidden: { opacity: 0, x: -34 },
             visible: {
@@ -91,15 +91,15 @@ export default function ThirdPage() {
         >
           <div>
             <p className="font-googlesansflex text-sm font-semibold uppercase text-brown">
-              The Luxury Hotel
+              Tiripon Spring Resort
             </p>
             <div className="mt-2 h-px w-24 bg-tan" />
-            <h2 className="mt-6 max-w-sm font-heading text-5xl leading-[0.95] text-brown sm:text-6xl md:text-7xl">
-              Life Along the Coast
+            <h2 className="mt-5 max-w-sm font-heading text-[1.85rem] leading-[0.95] text-brown sm:text-4xl md:mt-6 md:text-5xl">
+              A Day At Spring Resort
             </h2>
           </div>
 
-          <div className="relative z-30 mt-10 flex flex-col items-start md:mt-16">
+          <div className="relative z-30 flex flex-col items-start">
             {resortSlides.map((slide, index) => (
               <Button
                 key={slide.name}
@@ -107,7 +107,7 @@ export default function ThirdPage() {
                 variant="ghost"
                 onClick={() => handleSlideSelect(index)}
                 aria-pressed={index === activeIndex}
-                className={`mb-3 h-auto justify-start rounded-none bg-transparent p-0 text-left font-googlesansflex text-3xl leading-none shadow-none hover:bg-transparent focus-visible:ring-brown/30 sm:text-4xl ${
+                className={`mb-2 h-auto justify-start rounded-none bg-transparent p-0 text-left font-googlesansflex text-[1.7rem] leading-none shadow-none hover:bg-transparent focus-visible:ring-brown/30 sm:text-4xl ${
                   index === activeIndex
                     ? "text-brown"
                     : "text-brown/55 hover:text-brown/80"
@@ -116,18 +116,10 @@ export default function ThirdPage() {
                 {slide.name}
               </Button>
             ))}
-            <p className="mt-5 max-w-md font-googlesansflex text-base leading-7 text-brown/70 sm:text-lg sm:leading-8">
+            <p className="mt-4 max-w-md font-googlesansflex text-[0.98rem] leading-7 text-brown/75 sm:text-lg sm:leading-8">
               {activeSlide.description}
             </p>
           </div>
-
-          <button
-            type="button"
-            className="mt-10 flex items-center gap-2 font-googlesansflex text-lg font-semibold text-[#8ea0a8]"
-          >
-            Accommodation Details
-            <ArrowRight className="size-4" />
-          </button>
         </motion.aside>
 
         <motion.div
@@ -151,10 +143,10 @@ export default function ThirdPage() {
               },
             }}
           >
-            <p className="max-w-2xl font-googlesansflex text-lg leading-8 text-brown/65">
-              The spaces were crafted using a low-impact building method that
-              embraces the land&apos;s natural contours, allowing each structure
-              to settle gently into the coastal landscape.
+            <p className="max-w-2xl font-googlesansflex text-base leading-7 text-brown/65 md:text-lg md:leading-8">
+              Tiripon Spring Resort is designed for refreshing day escapes, with
+              open-air cottages, poolside lounging, and natural spring water
+              experiences that keep every visit calm, cool, and easy.
             </p>
           </motion.div>
 
@@ -169,7 +161,7 @@ export default function ThirdPage() {
               },
             }}
           >
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-tan sm:aspect-[16/10]">
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-tan sm:aspect-[16/10]">
               <AnimatePresence initial={false} mode="sync">
                 <motion.div
                   key={activeSlide.name}
@@ -213,24 +205,46 @@ export default function ThirdPage() {
               <MoveRight className="size-5 sm:size-6 md:size-8" />
             </Button>
 
-            <div
-              className="mt-4 flex items-center justify-center gap-2 md:hidden"
-              aria-label="Select resort image"
-            >
-              {resortSlides.map((slide, index) => (
-                <button
-                  key={slide.name}
+            <div className="mt-4 space-y-3 md:hidden">
+              <div
+                className="flex items-center justify-center gap-2"
+                aria-label="Select resort image"
+              >
+                {resortSlides.map((slide, index) => (
+                  <button
+                    key={slide.name}
+                    type="button"
+                    onClick={() => handleSlideSelect(index)}
+                    aria-label={`Show ${slide.name}`}
+                    aria-current={index === activeIndex ? "true" : undefined}
+                    className={`h-2.5 rounded-full transition-all ${
+                      index === activeIndex
+                        ? "w-8 bg-brown"
+                        : "w-2.5 bg-brown/30"
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
                   type="button"
-                  onClick={() => handleSlideSelect(index)}
-                  aria-label={`Show ${slide.name}`}
-                  aria-current={index === activeIndex ? "true" : undefined}
-                  className={`h-2.5 rounded-full transition-all ${
-                    index === activeIndex
-                      ? "w-8 bg-brown"
-                      : "w-2.5 bg-brown/30"
-                  }`}
-                />
-              ))}
+                  onClick={handlePreviousSlide}
+                  variant="outline"
+                  className="h-10 rounded-full border-brown/25 bg-cream text-brown hover:bg-khaki/50"
+                >
+                  <MoveLeft className="mr-1 size-4" />
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNextSlide}
+                  variant="outline"
+                  className="h-10 rounded-full border-brown/25 bg-cream text-brown hover:bg-khaki/50"
+                >
+                  Next
+                  <MoveRight className="ml-1 size-4" />
+                </Button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

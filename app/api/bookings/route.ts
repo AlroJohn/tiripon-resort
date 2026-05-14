@@ -243,14 +243,18 @@ export async function GET(request: Request) {
   }
 
   const page = Math.max(Number(searchParams.get("page") ?? "1") || 1, 1);
-  const skip = (page - 1) * PAGE_SIZE;
+  const size = Math.max(Number(searchParams.get("size") ?? `${PAGE_SIZE}`) || PAGE_SIZE, 1);
+  const skip = (page - 1) * size;
 
   const bookings = await prisma.booking.findMany({
     orderBy: {
       createdAt: "desc",
     },
+    where: {
+      deleted: false,
+    },
     skip,
-    take: PAGE_SIZE,
+    take: size,
     include: {
       cottage: {
         orderBy: {
@@ -273,6 +277,7 @@ export async function GET(request: Request) {
     checkIn: formatDate(booking.checkIn),
     checkOut: formatDate(booking.checkOut),
     createdAt: formatDate(booking.createdAt),
+    createdAtIso: booking.createdAt.toISOString(),
     cottages: booking.cottage.map((cottage) => ({
       id: cottage.id,
       name: cottage.name,

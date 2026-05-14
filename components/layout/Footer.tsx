@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useSubscribe } from "@/hooks/use-subscribe";
@@ -43,6 +44,7 @@ const policyContent = {
 type PolicyKey = keyof typeof policyContent;
 
 export default function Footer() {
+  const shouldReduceMotion = useReducedMotion();
   const [activePolicy, setActivePolicy] = useState<PolicyKey | null>(null);
   const [isAntiBotModalOpen, setIsAntiBotModalOpen] = useState(false);
   const [antiBotTitle, setAntiBotTitle] = useState("Request Blocked");
@@ -58,6 +60,14 @@ export default function Footer() {
   const [formStartedAt] = useState(() => Date.now());
   const { subscribe, isLoading } = useSubscribe();
   const activePolicyData = activePolicy ? policyContent[activePolicy] : null;
+  const sectionAnimation = shouldReduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 24 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.2 },
+        transition: { duration: 0.55, ease: "easeOut" as const },
+      };
 
   const handleSubscribe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -127,142 +137,169 @@ export default function Footer() {
   };
 
   return (
-    <div className="md:h-fit min-h-full w-full flex flex-col items-center pt-24">
-      <div className="h-[20dvh] w-full max-w-[90dvw] overflow-hidden pb-12">
-        <div className=" flex flex-row gap-4 items-center justify-center">
-          <Separator className="border border-accent-foreground/50 md:block hidden" />
-          <img src={"logo/logo.png"} alt="Logo" className="h-32" />
-          <Separator className="border border-accent-foreground/50 md:block hidden" />
-        </div>
-      </div>
-      <div className="md:max-w-[90dvw] w-full h-full md:grid md:grid-cols-4 sm:grid-cols-2 flex flex-col gap-6 pb-12">
-        <Separator className="border w-full md:hidden block " />
-        <div className="col-span-1 flex flex-col gap-4 font-googlesansflex md:p-0 p-4">
-          <h3 className="text-2xl font-semibold ">About Us</h3>
-          <p className="cormorant-garamond md:max-w-[80%]">
-            Since 2019, our resort in Zone 8 Basagan, Tabaco City has welcomed
-            families and friends with relaxing day stays, scenic views, and warm
-            local hospitality.
-          </p>
-          <div className="flex gap-2">
+    <>
+      <footer className="relative w-full overflow-hidden border-t border-brown/20 bg-gradient-to-b from-cream via-cream to-amber-50/70 text-brown">
+        <div className="mx-auto flex w-full md:max-w-[90dvw] max-w-[98dvw] flex-col px-5 pb-8 pt-16 sm:px-8 md:pt-20">
+          <motion.div
+            {...sectionAnimation}
+            className="mb-10 flex items-center justify-center gap-4 md:mb-14"
+          >
+            <Separator className="hidden border border-brown/35 md:block md:w-24" />
             <img
-              className="max-w-8 max-h-8"
-              src={"svg/facebook.svg"}
-              alt="Facebook"
+              src={"logo/logo.png"}
+              alt="Logo"
+              className="h-20 w-auto sm:h-24 md:h-28"
             />
-            <img
-              className="max-w-8 max-h-8"
-              src={"svg/twitter.svg"}
-              alt="Twitter"
-            />
-            <img
-              className="max-w-8 max-h-8"
-              src={"svg/instagram.svg"}
-              alt="Instagram"
-            />
-          </div>
-        </div>
-        <Separator className="border w-full md:hidden block" />
-        <div className="font-googlesansflex col-span-2 md:p-0 p-4 flex flex-row gap-6 w-full min-h-[20dvh]">
-          <div className="w-full  flex flex-col gap-4">
-            <h3 className="text-xl font-semibold ">Hours</h3>
-            <div className="">
-              <span className="flex gap-2 items-center">
-                <Separator className="max-w-4 border" /> Monday - Friday: 7am -
-                6pm
-              </span>
-              <span className="flex gap-2 items-center">
-                <Separator className="max-w-4 border" />
-                Saturday - Sunday: 8am - 6pm
-              </span>
-            </div>
-          </div>
-          <div className="w-full flex flex-col gap-4">
-            <h3 className="text-xl font-semibold ">Terms</h3>
-            <div className="pl-4 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setActivePolicy("privacy")}
-                className="flex w-full items-center gap-2 text-left"
-              >
-                <Separator className="max-w-4 border" />
-                <span className="break-normal whitespace-normal">
-                  Privacy Policy
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivePolicy("terms")}
-                className="flex w-full items-center gap-2 text-left"
-              >
-                <Separator className="max-w-4 border" />
-                <span className="break-normal whitespace-normal">
-                  Terms and Conditions
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivePolicy("refund")}
-                className="flex w-full items-center gap-2 text-left"
-              >
-                <Separator className="max-w-4 border" />
-                <span className="break-normal whitespace-normal">
-                  Refund Policy
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivePolicy("support")}
-                className="flex w-full items-center gap-2 text-left"
-              >
-                <Separator className="max-w-4 border" />
-                <span className="break-normal whitespace-normal">Support</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        <Separator className="border w-full md:hidden block" />
-        <div className="col-span-1 flex flex-col gap-4 md:p-0 p-6 font-googlesansflex">
-          <h3 className="capitalize text-xl font-semibold ">
-            Subscribe to our newsletter
-          </h3>
-          <form className="relative w-full" onSubmit={handleSubscribe}>
-            <Input
-              type="email"
-              value={subscriberEmail}
-              onChange={(event) => setSubscriberEmail(event.target.value)}
-              required
-              className="h-14 pr-14 rounded-none border-4 border-brown/70"
-              placeholder="Enter your email"
-            />
-            <input
-              type="text"
-              name="website"
-              value={website}
-              onChange={(event) => setWebsite(event.target.value)}
-              tabIndex={-1}
-              autoComplete="off"
-              className="sr-only"
-              aria-hidden="true"
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-              aria-label="Subscribe"
+            <Separator className="hidden border border-brown/35 md:block md:w-24" />
+          </motion.div>
+
+          <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-14 md:gap-10">
+            <motion.div
+              {...sectionAnimation}
+              transition={{ duration: 0.5, delay: 0.05 }}
+              className="md:col-span-4"
             >
-              <ArrowRight className="h-10 w-10 bg-till p-2 text-accent-foreground cursor-pointer" />
-            </button>
-          </form>
+              <div className="rounded-xl border border-brown/15 bg-white/45 p-6 shadow-sm backdrop-blur-[1px]">
+                <h3 className="font-googlesansflex text-2xl font-semibold tracking-tight">
+                  About Us
+                </h3>
+                <p className="cormorant-garamond mt-3 max-w-prose text-[1.05rem] leading-7 text-brown/85">
+                  Our resort is located at Zone 8 Basagan, Tabaco City, And we
+                  welcomed families and friends with relaxing day stays, scenic
+                  views, and warm local hospitality.
+                </p>
+                <div className="mt-5 flex items-center gap-3">
+                  {["facebook", "twitter", "instagram"].map((social) => (
+                    <motion.img
+                      key={social}
+                      whileHover={
+                        shouldReduceMotion ? {} : { y: -2, scale: 1.04 }
+                      }
+                      transition={{ duration: 0.2 }}
+                      className="h-8 w-8 cursor-pointer rounded-sm border border-brown/10 bg-white/60 p-1.5"
+                      src={`svg/${social}.svg`}
+                      alt={social[0].toUpperCase() + social.slice(1)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              {...sectionAnimation}
+              transition={{ duration: 0.5, delay: 0.12 }}
+              className="md:col-span-6"
+            >
+              <div className="rounded-xl border border-brown/15 bg-white/45 p-6 shadow-sm backdrop-blur-[1px]">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                  <div className="min-w-0 flex flex-col gap-3">
+                    <h3 className="font-googlesansflex text-xl font-semibold tracking-tight">
+                      Hours
+                    </h3>
+                    <div className="space-y-2 text-brown/85">
+                      <span className="flex min-w-0 items-start gap-2 text-sm sm:text-base">
+                        <span className="mt-3 h-px w-4 shrink-0 bg-brown/30" />
+                        <span className="min-w-0 flex-1 leading-7">
+                          Monday - Friday: 7am - 6pm
+                        </span>
+                      </span>
+                      <span className="flex min-w-0 items-start gap-2 text-sm sm:text-base">
+                        <span className="mt-3 h-px w-4 shrink-0 bg-brown/30" />
+                        <span className="min-w-0 flex-1 leading-7">
+                          Saturday - Sunday: 8am - 6pm
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex flex-col gap-3">
+                    <h3 className="font-googlesansflex text-xl font-semibold tracking-tight">
+                      Terms
+                    </h3>
+                    <div className="space-y-1.5">
+                      {(Object.keys(policyContent) as PolicyKey[]).map(
+                        (key) => (
+                          <motion.button
+                            key={key}
+                            type="button"
+                            onClick={() => setActivePolicy(key)}
+                            whileHover={shouldReduceMotion ? {} : { x: 3 }}
+                            className="flex min-w-0 w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm text-brown/90 transition-colors hover:bg-brown/5 sm:text-base"
+                          >
+                            <span className="mt-3 h-px w-4 shrink-0 bg-brown/30" />
+                            <span className="min-w-0 flex-1 leading-7">
+                              {policyContent[key].title}
+                            </span>
+                          </motion.button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              {...sectionAnimation}
+              transition={{ duration: 0.5, delay: 0.18 }}
+              className="md:col-span-4"
+            >
+              <div className="rounded-xl border border-brown/15 bg-white/45 p-6 shadow-sm backdrop-blur-[1px]">
+                <h3 className="font-googlesansflex text-xl font-semibold capitalize tracking-tight">
+                  Subscribe to our newsletter
+                </h3>
+                <p className="mt-2 text-sm text-brown/80">
+                  Get updates on promos, schedules, and resort news.
+                </p>
+                <form
+                  className="relative mt-4 w-full"
+                  onSubmit={handleSubscribe}
+                >
+                  <Input
+                    type="email"
+                    value={subscriberEmail}
+                    onChange={(event) => setSubscriberEmail(event.target.value)}
+                    required
+                    className="h-12 rounded-md border-2 border-brown/55 bg-cream/80 pr-14"
+                    placeholder="Enter your email"
+                  />
+                  <input
+                    type="text"
+                    name="website"
+                    value={website}
+                    onChange={(event) => setWebsite(event.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    className="sr-only"
+                    aria-hidden="true"
+                  />
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    whileHover={shouldReduceMotion ? {} : { scale: 1.06 }}
+                    whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    aria-label="Subscribe"
+                  >
+                    <ArrowRight className="h-8 w-8 cursor-pointer rounded-md bg-till p-1.5 text-accent-foreground shadow-sm" />
+                  </motion.button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+
+          <Separator className="my-7 border-brown/20" />
+          <motion.div
+            {...sectionAnimation}
+            transition={{ duration: 0.45, delay: 0.2 }}
+            className="flex min-h-[60px] w-full flex-col items-center justify-between gap-2 text-center text-sm text-brown/80 md:flex-row md:text-left"
+          >
+            <p>Hotel and Resort created by Alro John Mercado</p>
+            <p>
+              Copyright &copy; {new Date().getFullYear()} All rights reserved.
+            </p>
+          </motion.div>
         </div>
-      </div>
-      <Separator className="" />
-      <div className="max-w-[90dvw] w-full py-6 h-[15dvh] md:h-[10dvh] flex md:flex-row flex-col gap-2 md:gap-4 md:justify-between justify-center items-center">
-        <p className="text-center md:text-start">
-          Hotel and Resort created by Alro John Mercado
-        </p>
-        <p>Copyright &copy; {new Date().getFullYear()} All rights reserved.</p>
-      </div>
+      </footer>
 
       <AlertDialog
         open={isAntiBotModalOpen}
@@ -328,6 +365,6 @@ export default function Footer() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

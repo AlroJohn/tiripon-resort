@@ -8,8 +8,10 @@ export default function Home() {
   return (
     <main className=" min-h-dvh">
       <HeroPage />
-      <VideoPage />
-      <SecondPage />
+      <div className="md:block hidden">
+        <VideoPage />
+        <SecondPage />
+      </div>
       <ThirdPage />
       <FourthPage />
     </main>

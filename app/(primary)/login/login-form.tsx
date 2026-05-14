@@ -25,7 +25,7 @@ export function LoginForm() {
     <Card className="w-full max-w-[420px] rounded-lg border-stone/70 bg-cream/95 shadow-xl shadow-stone/30 ring-till/20">
       <CardHeader className="gap-2 px-6 pt-6">
         <div className="flex size-11 items-center justify-center rounded-lg bg-till text-cream shadow-sm"></div>
-        <CardTitle className="font-bodoni text-3xl text-brown">
+        <CardTitle className="font-spanlight text-3xl text-brown">
           Welcome back
         </CardTitle>
         <CardDescription className="font-urbanist text-brown/70">
@@ -56,6 +56,7 @@ export function LoginForm() {
               id="password"
               name="password"
               type="password"
+              placeholder="********"
               autoComplete="current-password"
               required
               className="h-11 border-tan/80 bg-sand/40 text-brown placeholder:text-brown/45 focus-visible:border-till focus-visible:ring-mint/40"

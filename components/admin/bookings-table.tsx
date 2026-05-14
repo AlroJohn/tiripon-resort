@@ -63,6 +63,7 @@ type BookingRow = {
   checkIn: string;
   checkOut: string;
   createdAt: string;
+  createdAtIso: string;
   cottages: Array<{
     id: number;
     name: string;
@@ -86,10 +87,18 @@ type BookingRow = {
 type BookingsTableProps = {
   bookings: BookingRow[];
   currentPage?: number;
+  pageSize?: number;
 };
 
-export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps) {
+export function BookingsTable({
+  bookings,
+  currentPage = 1,
+  pageSize = 10,
+}: BookingsTableProps) {
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [paymentFilter, setPaymentFilter] = useState<"all" | "unpaid_overdue">(
+    "all",
+  );
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(
     null,
   );
@@ -105,10 +114,29 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
     mimeType: string | null;
   } | null>(null);
   const [proofZoom, setProofZoom] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isPending, startTransition] = useTransition();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [isRealtimeSubscribed, setIsRealtimeSubscribed] = useState(false);
   const [rows, setRows] = useState<BookingRow[]>(bookings);
+  const filteredRows = useMemo(() => {
+    if (paymentFilter === "all") return rows;
+
+    const now = Date.now();
+    const thirtyMinutesMs = 30 * 60 * 1000;
+
+    return rows.filter((booking) => {
+      const isPaid = booking.receipt?.status === "paid";
+      if (isPaid) return false;
+
+      const createdAtMs = new Date(booking.createdAtIso).getTime();
+      if (Number.isNaN(createdAtMs)) return false;
+
+      return now - createdAtMs >= thirtyMinutesMs;
+    });
+  }, [paymentFilter, rows]);
+  const allSelected =
+    filteredRows.length > 0 && selectedIds.length === filteredRows.length;
 
   useEffect(() => {
     const saved =
@@ -133,9 +161,12 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
   useEffect(() => {
     const refreshRows = async () => {
       try {
-        const response = await fetch(`/api/bookings?page=${currentPage}`, {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          `/api/bookings?page=${currentPage}&size=${pageSize}`,
+          {
+            cache: "no-store",
+          },
+        );
 
         if (!response.ok) return;
 
@@ -187,7 +218,7 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
   useEffect(() => {
     const interval = setInterval(
       () => {
-        void fetch(`/api/bookings?page=${currentPage}`, {
+        void fetch(`/api/bookings?page=${currentPage}&size=${pageSize}`, {
           cache: "no-store",
         })
           .then((response) => (response.ok ? response.json() : null))
@@ -200,164 +231,250 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
     );
 
     return () => clearInterval(interval);
-  }, [currentPage, isRealtimeSubscribed]);
+  }, [currentPage, isRealtimeSubscribed, pageSize]);
 
   return (
     <>
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant={viewMode === "table" ? "default" : "outline"}
-          onClick={() => setViewMode("table")}
-        >
-          Table
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={viewMode === "cards" ? "default" : "outline"}
-          onClick={() => setViewMode("cards")}
-        >
-          Cards
-        </Button>
+      <div className="flex flex-wrap items-center justify-end gap-6">
+        <div className="flex gap-2 items-center">
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={(event) =>
+                setSelectedIds(
+                  event.target.checked ? filteredRows.map((row) => row.id) : [],
+                )
+              }
+            />
+            Select All
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            disabled={isPending || selectedIds.length === 0}
+            onClick={() => {
+              startTransition(() => {
+                void Promise.all(
+                  selectedIds.map((bookingId) => deleteBooking(bookingId)),
+                ).then(() => {
+                  setSelectedIds([]);
+                  setRows((current) =>
+                    current.filter((row) => !selectedIds.includes(row.id)),
+                  );
+                });
+              });
+            }}
+          >
+            Bulk Delete ({selectedIds.length})
+          </Button>
+        </div>
+        <div className="flex gap-2 items-center">
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === "table" ? "default" : "outline"}
+            onClick={() => setViewMode("table")}
+          >
+            Table
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === "cards" ? "default" : "outline"}
+            onClick={() => setViewMode("cards")}
+          >
+            Cards
+          </Button>
+        </div>
+        <div className="flex gap-2 items-center">
+          <Button
+            type="button"
+            size="sm"
+            variant={paymentFilter === "all" ? "default" : "outline"}
+            onClick={() => setPaymentFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={paymentFilter === "unpaid_overdue" ? "default" : "outline"}
+            onClick={() => setPaymentFilter("unpaid_overdue")}
+          >
+            Unpaid 30m+
+          </Button>
+        </div>
       </div>
 
       {viewMode === "table" ? (
-      <div className="overflow-hidden rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Guest</TableHead>
-              <TableHead>Schedule</TableHead>
-              <TableHead>Cottages</TableHead>
-              <TableHead>Guests</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Receipt</TableHead>
-              <TableHead className="w-10">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="h-28 text-center text-muted-foreground"
-                >
-                  No bookings found.
-                </TableCell>
+                <TableHead className="w-12">Select</TableHead>
+                <TableHead>Guest</TableHead>
+                <TableHead>Schedule</TableHead>
+                <TableHead>Cottages</TableHead>
+                <TableHead>Guests</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Receipt</TableHead>
+                <TableHead className="w-10">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
-            ) : (
-              rows.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell>
-                    <div className="font-medium">{booking.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {booking.email ?? booking.phone ?? "No contact"}
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {filteredRows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="h-28 text-center text-muted-foreground"
+                  >
+                    No bookings found for this filter.
                   </TableCell>
-                  <TableCell>
-                    <div>{booking.checkIn}</div>
-                    <div className="text-xs text-muted-foreground">
-                      to {booking.checkOut}
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-64">
-                    <div className="truncate">
-                      {booking.cottages
-                        .map((cottage) => cottage.name)
-                        .join(", ")}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {booking.cottages.length} selected
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {booking.numberOfAdults} adults, {booking.numberOfKids} kids
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {booking.totalPrice}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col items-start gap-1">
-                      <Badge
-                        variant={
-                          booking.receipt?.status === "paid"
-                            ? "default"
-                            : "secondary"
+                </TableRow>
+              ) : (
+                filteredRows.map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(booking.id)}
+                        onChange={(event) =>
+                          setSelectedIds((prev) =>
+                            event.target.checked
+                              ? [...new Set([...prev, booking.id])]
+                              : prev.filter((id) => id !== booking.id),
+                          )
                         }
-                      >
-                        {booking.receipt?.status ?? "missing"}
-                      </Badge>
-                      {booking.receipt && (
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{booking.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {booking.email ?? booking.phone ?? "No contact"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>{booking.checkIn}</div>
+                      <div className="text-xs text-muted-foreground">
+                        to {booking.checkOut}
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-64">
+                      <div className="truncate">
+                        {booking.cottages
+                          .map((cottage) => cottage.name)
+                          .join(", ")}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {booking.cottages.length} selected
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {booking.numberOfAdults} adults, {booking.numberOfKids}{" "}
+                      kids
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {booking.totalPrice}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col items-start gap-1">
                         <Badge
                           variant={
-                            booking.receipt.receiptConfirmation
-                              ? "outline"
+                            booking.receipt?.status === "paid"
+                              ? "default"
                               : "secondary"
                           }
                         >
-                          {booking.receipt.receiptConfirmation
-                            ? "confirmed"
-                            : "unconfirmed"}
+                          {booking.receipt?.status ?? "missing"}
                         </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
-                          <MoreHorizontal />
-                          <span className="sr-only">Open row actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onSelect={() => setSelectedBooking(booking)}
-                        >
-                          <Eye />
-                          View details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={
-                            !booking.receipt ||
-                            booking.receipt.status !== "paid" ||
-                            booking.receipt.receiptConfirmation
-                          }
-                          onSelect={() => setReceiptToConfirm(booking)}
-                        >
-                          <CheckCircle2 />
-                          Receipt confirmation
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={() => setBookingToDelete(booking)}
-                        >
-                          <Trash2 />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                        {booking.receipt && (
+                          <Badge
+                            variant={
+                              booking.receipt.receiptConfirmation
+                                ? "outline"
+                                : "secondary"
+                            }
+                          >
+                            {booking.receipt.receiptConfirmation
+                              ? "confirmed"
+                              : "unconfirmed"}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon-sm">
+                            <MoreHorizontal />
+                            <span className="sr-only">Open row actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onSelect={() => setSelectedBooking(booking)}
+                          >
+                            <Eye />
+                            View details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={
+                              !booking.receipt ||
+                              booking.receipt.status !== "paid" ||
+                              booking.receipt.receiptConfirmation
+                            }
+                            onSelect={() => setReceiptToConfirm(booking)}
+                          >
+                            <CheckCircle2 />
+                            Receipt confirmation
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => setBookingToDelete(booking)}
+                          >
+                            <Trash2 />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {rows.length === 0 ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {filteredRows.length === 0 ? (
             <div className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
-              No bookings found.
+              No bookings found for this filter.
             </div>
           ) : (
-            rows.map((booking) => (
-              <div key={booking.id} className="rounded-lg border bg-card p-4">
+            filteredRows.map((booking) => (
+              <div
+                key={booking.id}
+                className="rounded-lg border bg-cream/30 p-4"
+              >
+                <label className="inline-flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(booking.id)}
+                    onChange={(event) =>
+                      setSelectedIds((prev) =>
+                        event.target.checked
+                          ? [...new Set([...prev, booking.id])]
+                          : prev.filter((id) => id !== booking.id),
+                      )
+                    }
+                  />
+                  Select
+                </label>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{booking.name}</p>
@@ -367,7 +484,9 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
                   </div>
                   <Badge
                     variant={
-                      booking.receipt?.status === "paid" ? "default" : "secondary"
+                      booking.receipt?.status === "paid"
+                        ? "default"
+                        : "secondary"
                     }
                   >
                     {booking.receipt?.status ?? "missing"}
@@ -667,8 +786,9 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
           <AlertDialogHeader>
             <AlertDialogTitle>Delete booking?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes the booking for {bookingToDelete?.name},
-              including connected cottages and receipt.
+              This moves the booking for {bookingToDelete?.name} to Recycle Bin.
+              You can permanently delete it later from Bin (paid bookings
+              require password and 10 days minimum).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">

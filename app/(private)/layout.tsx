@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
-import { BotMessageSquare, CalendarCheck, Home, LogOut } from "lucide-react";
+import {
+  BotMessageSquare,
+  CalendarCheck,
+  Home,
+  LogOut,
+  Trash2,
+} from "lucide-react";
 
 import { auth, signOut } from "@/auth";
 import {
@@ -68,6 +74,15 @@ export default async function AdminLayout({
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a href="/bin">
+                      <Trash2 />
+                      <span>Recycle Bin</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <a href="/chatbot-management">
@@ -84,11 +99,9 @@ export default async function AdminLayout({
           <SidebarMenu>
             <SidebarMenuItem>
               <form action={logout}>
-                <SidebarMenuButton asChild>
-                  <button type="submit">
-                    <LogOut />
-                    <span>Logout</span>
-                  </button>
+                <SidebarMenuButton type="submit">
+                  <LogOut />
+                  <span>Logout</span>
                 </SidebarMenuButton>
               </form>
             </SidebarMenuItem>

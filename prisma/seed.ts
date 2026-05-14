@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 const adminEmail = "admin@tiriponresort.com";
 const adminName = "Administrator";
-const defaultPassword = "admin123";
+const defaultPassword = "tiriponresort2026**";
 
 function loadEnvFile() {
   const envPath = join(process.cwd(), ".env");

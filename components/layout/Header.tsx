@@ -4,6 +4,14 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
 
 function isTransparent(color: string) {
   return (
@@ -155,15 +163,11 @@ export default function Header() {
   const headerTextColor = useLightHeader
     ? "text-accent"
     : "text-accent-foreground";
-  const resolvedHeaderTextColor = isAtTop
-    ? "text-accent-foreground"
-    : headerTextColor;
+  const resolvedHeaderTextColor = isAtTop ? "text-accent" : headerTextColor;
   const separatorColor = useLightHeader
     ? "border-accent"
     : "border-accent-foreground";
-  const resolvedSeparatorColor = isAtTop
-    ? "border-accent-foreground"
-    : separatorColor;
+  const resolvedSeparatorColor = isAtTop ? "border-accent" : separatorColor;
   const separatorBackground = useLightHeader
     ? "bg-accent/30"
     : "bg-accent-foreground/30";
@@ -171,7 +175,10 @@ export default function Header() {
     ? "bg-accent-foreground/30"
     : separatorBackground;
   const logoSrc =
-    isAtTop || !useLightHeader ? "/logo/logo.png" : "/logo/logo-white.png";
+    isAtTop || useLightHeader ? "/logo/logo-accent.png" : "/logo/logo.png";
+  const headerBackgroundClass = isAtTop
+    ? "bg-accent/10 shadow-lg backdrop-blur-sm"
+    : "bg-accent/10 shadow-lg backdrop-blur-sm";
 
   return (
     <header
@@ -179,7 +186,7 @@ export default function Header() {
       className={`
         fixed top-0 z-50
         flex h-[10dvh] w-full items-center justify-center
-        bg-white/10 shadow-lg backdrop-blur-sm
+        ${headerBackgroundClass}
         transform transition-transform duration-300 ease-out
         ${showHeader ? "translate-y-0" : "-translate-y-full"}
       `}
@@ -190,15 +197,43 @@ export default function Header() {
         >
           {/* Menu */}
           <li className="flex items-center md:gap-4 gap-2">
-            <Button
-              className={`bg-white/5 md:p-4 border-none rounded-none cursor-pointer uppercase text-sm md:text-lg font-thin ${resolvedHeaderTextColor}`}
-            >
-              <div className="w-8 md:w-10 flex flex-col gap-2">
-                <Separator className={`border ${resolvedSeparatorColor}`} />
-                <Separator className={`border ${resolvedSeparatorColor}`} />
-              </div>
-              <h1>Menu</h1>
-            </Button>
+            <Drawer direction="bottom">
+              <DrawerTrigger asChild>
+                <Button
+                  className={`bg-accent/5 md:p-4 border-none rounded-none cursor-pointer uppercase text-sm md:text-lg font-thin ${resolvedHeaderTextColor}`}
+                >
+                  <div className="w-8 md:w-10 flex flex-col gap-2">
+                    <Separator className={`border ${resolvedSeparatorColor}`} />
+                    <Separator className={`border ${resolvedSeparatorColor}`} />
+                  </div>
+                  <h1>Menu</h1>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="rounded-t-2xl border-brown/20 bg-cream">
+                <DrawerHeader className="px-5 pt-4 text-left">
+                  <DrawerTitle className="font-googlesansflex text-xl text-brown">
+                    Quick Actions
+                  </DrawerTitle>
+                  <DrawerDescription className="font-googlesansflex text-brown/75">
+                    Choose where you want to go.
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="grid gap-3 px-5 pb-6">
+                  <a
+                    href="/reservation"
+                    className="rounded-lg border border-brown/20 bg-accent px-4 py-3 text-center font-googlesansflex text-base font-semibold text-brown transition-colors hover:bg-khaki/40"
+                  >
+                    Make a Reservation
+                  </a>
+                  <a
+                    href="/login"
+                    className="rounded-lg border border-brown/20 bg-brown px-4 py-3 text-center font-googlesansflex text-base font-semibold text-cream transition-colors hover:bg-brown/90"
+                  >
+                    Login to Admin
+                  </a>
+                </div>
+              </DrawerContent>
+            </Drawer>
           </li>
 
           {/* Logo */}
@@ -216,7 +251,7 @@ export default function Header() {
           </li>
 
           {/* Desktop only */}
-          <li className="hidden md:flex items-center gap-4 justify-center text-lg bg-white/5 px-4">
+          <li className="hidden md:flex items-center gap-4 justify-center text-lg bg-accent/5 px-4">
             {/* <a
               href="/contact"
               className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full"

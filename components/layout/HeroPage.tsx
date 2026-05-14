@@ -4,6 +4,7 @@ import { ArrowRightFromLine } from "lucide-react";
 import { animate, motion } from "framer-motion";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
+import { redirect } from "next/navigation";
 
 export default function HeroPage() {
   const scrollToBooking = () => {
@@ -18,6 +19,10 @@ export default function HeroPage() {
       ease: [0.22, 1, 0.36, 1],
       onUpdate: (latest) => window.scrollTo(0, latest),
     });
+  };
+
+  const redirectToBooking = () => {
+    redirect("/reservation");
   };
 
   return (
@@ -110,7 +115,18 @@ export default function HeroPage() {
                   <Button
                     type="button"
                     onClick={scrollToBooking}
-                    className="flex h-12 w-48 cursor-pointer gap-4 rounded-full p-2 text-xl"
+                    className="md:flex hidden h-12 w-48 cursor-pointer gap-4 rounded-full p-2 text-xl"
+                  >
+                    Book Now
+                    <span className="flex items-center justify-center rounded-full bg-muted p-2">
+                      <ArrowRightFromLine className="text-accent-foreground" />
+                    </span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    onClick={redirectToBooking}
+                    className="flex md:hidden h-12 w-48 cursor-pointer gap-4 rounded-full p-2 text-xl"
                   >
                     Book Now
                     <span className="flex items-center justify-center rounded-full bg-muted p-2">

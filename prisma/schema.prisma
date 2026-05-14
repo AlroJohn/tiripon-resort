@@ -50,6 +50,8 @@ model Booking {
   number_of_adult String
   number_of_kids  String
   total_price     Float
+  deleted         Boolean?   @default(false)
+  deletedAt       DateTime?
   summary         String?
   checkIn         DateTime?
   checkOut        DateTime?

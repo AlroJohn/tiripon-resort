@@ -1,3 +1,7 @@
+import { prisma } from "@/lib/prisma";
+import {} from "../bookings/actions";
+import { Prisma } from "@/lib/generated/prisma/client";
+import { BinTable } from "@/components/admin/bin-table";
 import {
   Pagination,
   PaginationContent,
@@ -6,8 +10,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { BookingsTable } from "@/components/admin/bookings-table";
-import { prisma } from "@/lib/prisma";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100] as const;
 
@@ -27,105 +29,95 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
-function getPageHref(page: number, size: number) {
-  return `/bookings?page=${page}&size=${size}`;
+function getPageHref(
+  page: number,
+  size: number,
+  filter: "all" | "paid" | "unpaid",
+) {
+  return `/bin?page=${page}&size=${size}&filter=${filter}`;
 }
 
-export default async function AdminPage({
+export default async function RecycleBin({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string | string[]; size?: string | string[] }>;
+  searchParams: Promise<{
+    filter?: string | string[];
+    page?: string | string[];
+    size?: string | string[];
+  }>;
 }) {
   const params = await searchParams;
   const rawPage = Array.isArray(params.page) ? params.page[0] : params.page;
   const rawSize = Array.isArray(params.size) ? params.size[0] : params.size;
+  const rawFilter = Array.isArray(params.filter)
+    ? params.filter[0]
+    : params.filter;
   const currentPage = Math.max(Number(rawPage ?? "1") || 1, 1);
   const selectedSize = PAGE_SIZE_OPTIONS.includes(Number(rawSize) as never)
     ? Number(rawSize)
     : 10;
+  const filterParam =
+    rawFilter === "paid" || rawFilter === "unpaid" ? rawFilter : "all";
+  const where: Prisma.BookingWhereInput = {
+    deleted: true,
+    ...(filterParam === "paid"
+      ? { receipt: { is: { status: "paid" } } }
+      : filterParam === "unpaid"
+        ? {
+            OR: [
+              { receipt: { is: null } },
+              { receipt: { is: { status: { not: "paid" } } } },
+            ],
+          }
+        : {}),
+  };
   const skip = (currentPage - 1) * selectedSize;
-
-  const [bookings, totalBookings] = await Promise.all([
+  const [deletedBookings, totalBookings] = await Promise.all([
     prisma.booking.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      where: {
-        deleted: false,
-      },
+      where,
+      orderBy: { createdAt: "desc" },
       skip,
       take: selectedSize,
-      include: {
-        cottage: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-        receipt: true,
-      },
+      include: { receipt: true },
     }),
-    prisma.booking.count({
-      where: {
-        deleted: false,
-      },
-    }),
+    prisma.booking.count({ where }),
   ]);
-
   const pageCount = Math.max(Math.ceil(totalBookings / selectedSize), 1);
-  const rows = bookings.map((booking) => ({
-    id: booking.id,
-    name: booking.name,
-    email: booking.email,
-    phone: booking.phone,
-    numberOfAdults: booking.number_of_adult,
-    numberOfKids: booking.number_of_kids,
-    totalPrice: formatCurrency(booking.total_price),
-    summary: booking.summary,
-    checkIn: formatDate(booking.checkIn),
-    checkOut: formatDate(booking.checkOut),
-    createdAt: formatDate(booking.createdAt),
-    createdAtIso: booking.createdAt.toISOString(),
-    cottages: booking.cottage.map((cottage) => ({
-      id: cottage.id,
-      name: cottage.name,
-      description: cottage.description,
-      price: formatCurrency(cottage.price),
-    })),
-    receipt: booking.receipt
-      ? {
-          id: booking.receipt.id,
-          status: booking.receipt.status,
-          receiptConfirmation: Boolean(booking.receipt.receipt_confirmation),
-          downPaymentAmount: formatCurrency(booking.receipt.downPaymentAmount),
-          proofFileName: booking.receipt.proofFileName,
-          proofMimeType: booking.receipt.proofMimeType,
-          proofViewUrl: booking.receipt.proofViewUrl,
-          proofUploadedAt: formatDate(booking.receipt.proofUploadedAt),
-          paidAt: formatDate(booking.receipt.paidAt),
-          createdAt: formatDate(booking.receipt.createdAt),
-        }
-      : null,
-  }));
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Bookings</h1>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Recycle Bin</h1>
         <p className="text-sm text-muted-foreground">
-          Manage reservation requests, receipt proof, and connected cottages.
+          Soft-deleted bookings. Permanent deletion is allowed after 10 days.
         </p>
       </div>
 
-      <BookingsTable
-        bookings={rows}
-        currentPage={currentPage}
-        pageSize={selectedSize}
+      <BinTable
+        filter={filterParam}
+        selectedSize={selectedSize}
+        rows={deletedBookings.map((booking) => ({
+          id: booking.id,
+          name: booking.name,
+          email: booking.email,
+          phone: booking.phone,
+          deletedAt: booking.deletedAt ? booking.deletedAt.toISOString() : null,
+          createdAt: booking.createdAt.toISOString(),
+          receiptStatus: booking.receipt?.status ?? null,
+          summary: booking.summary ?? null,
+          checkIn: formatDate(booking.checkIn),
+          checkOut: formatDate(booking.checkOut),
+          numberOfAdults: booking.number_of_adult,
+          numberOfKids: booking.number_of_kids,
+          totalPrice: formatCurrency(booking.total_price),
+        }))}
       />
 
       <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
-          Showing {bookings.length === 0 ? 0 : skip + 1}-
-          {Math.min(skip + bookings.length, totalBookings)} of {totalBookings}
+          Showing {deletedBookings.length === 0 ? 0 : skip + 1}-
+          {Math.min(skip + deletedBookings.length, totalBookings)} of{" "}
+          {totalBookings}
         </p>
         <div className="flex items-center gap-2">
           <span>Show</span>
@@ -133,7 +125,7 @@ export default async function AdminPage({
             {PAGE_SIZE_OPTIONS.map((size) => (
               <PaginationLink
                 key={size}
-                href={getPageHref(1, size)}
+                href={getPageHref(1, size, filterParam)}
                 isActive={size === selectedSize}
               >
                 {size}
@@ -145,7 +137,11 @@ export default async function AdminPage({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                href={getPageHref(Math.max(currentPage - 1, 1), selectedSize)}
+                href={getPageHref(
+                  Math.max(currentPage - 1, 1),
+                  selectedSize,
+                  filterParam,
+                )}
                 aria-disabled={currentPage <= 1}
                 className={
                   currentPage <= 1 ? "pointer-events-none opacity-50" : ""
@@ -162,7 +158,7 @@ export default async function AdminPage({
               .map((page) => (
                 <PaginationItem key={page}>
                   <PaginationLink
-                    href={getPageHref(page, selectedSize)}
+                    href={getPageHref(page, selectedSize, filterParam)}
                     isActive={page === currentPage}
                   >
                     {page}
@@ -174,6 +170,7 @@ export default async function AdminPage({
                 href={getPageHref(
                   Math.min(currentPage + 1, pageCount),
                   selectedSize,
+                  filterParam,
                 )}
                 aria-disabled={currentPage >= pageCount}
                 className={
@@ -189,3 +186,5 @@ export default async function AdminPage({
     </main>
   );
 }
+
+// Rendered by BinViewsClient.
