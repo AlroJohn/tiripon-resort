@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
@@ -67,11 +68,13 @@ function shouldUseLightHeader(color: string) {
 }
 
 export default function Header() {
+  const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const lastScrollYRef = useRef(0);
   const [showHeader, setShowHeader] = useState(true);
   const [useLightHeader, setUseLightHeader] = useState(true);
   const [isAtTop, setIsAtTop] = useState(true);
+  const useDarkHeader = pathname === "/reservation" || pathname === "/login";
 
   useEffect(() => {
     const updateHeaderVisibility = () => {
@@ -102,6 +105,11 @@ export default function Header() {
   useEffect(() => {
     const updateHeaderColor = () => {
       const header = headerRef.current;
+
+      if (useDarkHeader) {
+        setUseLightHeader(false);
+        return;
+      }
 
       if (!header) {
         return;
@@ -158,24 +166,36 @@ export default function Header() {
       window.removeEventListener("scroll", updateHeaderColor);
       window.removeEventListener("resize", updateHeaderColor);
     };
-  }, []);
+  }, [useDarkHeader]);
 
   const headerTextColor = useLightHeader
     ? "text-accent"
     : "text-accent-foreground";
-  const resolvedHeaderTextColor = isAtTop ? "text-accent" : headerTextColor;
+  const resolvedHeaderTextColor = useDarkHeader
+    ? "text-brown"
+    : isAtTop
+      ? "text-accent"
+      : headerTextColor;
   const separatorColor = useLightHeader
     ? "border-accent"
     : "border-accent-foreground";
-  const resolvedSeparatorColor = isAtTop ? "border-accent" : separatorColor;
+  const resolvedSeparatorColor = useDarkHeader
+    ? "border-brown"
+    : isAtTop
+      ? "border-accent"
+      : separatorColor;
   const separatorBackground = useLightHeader
     ? "bg-accent/30"
     : "bg-accent-foreground/30";
-  const resolvedSeparatorBackground = isAtTop
-    ? "bg-accent-foreground/30"
-    : separatorBackground;
+  const resolvedSeparatorBackground = useDarkHeader
+    ? "bg-brown/30"
+    : isAtTop
+      ? "bg-accent-foreground/30"
+      : separatorBackground;
   const logoSrc =
-    isAtTop || useLightHeader ? "/logo/logo-white.png" : "/logo/logo.png";
+    useDarkHeader || (!isAtTop && !useLightHeader)
+      ? "/logo/logo.png"
+      : "/logo/logo-white.png";
   const headerBackgroundClass = isAtTop
     ? "bg-accent/10 shadow-lg backdrop-blur-sm"
     : "bg-accent/10 shadow-lg backdrop-blur-sm";
@@ -219,6 +239,12 @@ export default function Header() {
                   </DrawerDescription>
                 </DrawerHeader>
                 <div className="grid gap-3 px-5 pb-6">
+                  <a
+                    href="/tiripon-resort"
+                    className="rounded-lg border border-brown/20 bg-white px-4 py-3 text-center font-googlesansflex text-base font-semibold text-brown transition-colors hover:bg-sand/40"
+                  >
+                    Homepage
+                  </a>
                   <a
                     href="/reservation"
                     className="rounded-lg border border-brown/20 bg-accent px-4 py-3 text-center font-googlesansflex text-base font-semibold text-brown transition-colors hover:bg-khaki/40"

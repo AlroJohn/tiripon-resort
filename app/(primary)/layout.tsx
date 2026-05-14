@@ -1,5 +1,6 @@
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import MapDirectionsSection from "@/components/layout/MapDirectionsSection";
 import { Toaster } from "@/components/ui/sonner";
 
 export default function PrimaryLayout({
@@ -13,6 +14,7 @@ export default function PrimaryLayout({
         <Header />
       </div>
       {children}
+      <MapDirectionsSection />
       <Footer />
       <Toaster position="bottom-right" />
     </section>
