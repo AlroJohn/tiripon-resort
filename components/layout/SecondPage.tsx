@@ -270,7 +270,7 @@ export default function SecondPage() {
 
     if (unavailableSelectedCottage) {
       setFormError(
-        `${unavailableSelectedCottage.name} is already paid and reserved for this date.`,
+        `${unavailableSelectedCottage.name} is already reserved for this date.`,
       );
       return;
     }
@@ -642,7 +642,7 @@ export default function SecondPage() {
                                 </motion.span>
                                 {isUnavailable && (
                                   <span className="absolute inset-x-3 bottom-3 bg-brown px-3 py-2 text-center font-googlesansflex text-xs font-semibold uppercase tracking-wide text-cream shadow">
-                                    Paid for this date
+                                    Reserved for this date
                                   </span>
                                 )}
                               </div>

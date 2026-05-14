@@ -39,9 +39,18 @@ async function getPaidCottageNamesForDay(date: Date) {
         gte: start,
         lt: end,
       },
-      receipt: {
-        status: "paid",
-      },
+      OR: [
+        {
+          receipt: {
+            status: "paid",
+          },
+        },
+        {
+          receipt: {
+            receipt_confirmation: true,
+          },
+        },
+      ],
     },
     select: {
       cottage: {
@@ -152,7 +161,7 @@ export async function POST(request: Request) {
     if (unavailableCottage) {
       return Response.json(
         {
-          error: `${unavailableCottage.name} is already paid and reserved for this date.`,
+          error: `${unavailableCottage.name} is already reserved for this date.`,
         },
         { status: 409 },
       );
