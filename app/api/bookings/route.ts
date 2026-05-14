@@ -254,13 +254,19 @@ export async function GET(request: Request) {
   const availabilityDate = searchParams.get("availabilityDate");
 
   if (availabilityDate) {
-    const date = new Date(`${availabilityDate}T00:00:00`);
+    // Parse the date string as YYYY-MM-DD (local calendar day)
+    const [year, month, day] = availabilityDate.split('-').map(Number);
 
-    if (Number.isNaN(date.getTime())) {
+    // Create start and end as local midnight times
+    // These will correctly represent the calendar day regardless of server timezone
+    const localStart = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const localEnd = new Date(year, month - 1, day + 1, 0, 0, 0, 0);
+
+    if (Number.isNaN(localStart.getTime()) || Number.isNaN(localEnd.getTime())) {
       return Response.json({ error: "Invalid availability date." }, { status: 400 });
     }
 
-    const paidCottageNames = await getPaidCottageNamesForDay(date);
+    const paidCottageNames = await getPaidCottageNamesForDay(localStart);
 
     return Response.json(
       {
