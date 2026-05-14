@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { Check, ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useBookingRequest } from "@/hooks/use-booking-request";
+import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 import type { SelectedCottage } from "@/lib/booking-types";
 import { DatePicker } from "./DatePicker";
 import { Button } from "../ui/button";
@@ -106,17 +107,17 @@ function GuestStepper({
           onClick={() => onChange(Math.max(0, value - 1))}
           aria-label={`Decrease ${label}`}
         >
-          <Minus className="size-3" />
+          <Minus className="size-3 pointer-events-auto" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
-          className="rounded-none text-brown hover:bg-tan/30"
+          className="rounded-none text-brown hover:bg-tan/30 "
           onClick={() => onChange(value + 1)}
           aria-label={`Increase ${label}`}
         >
-          <Plus className="size-3" />
+          <Plus className="size-3 pointer-events-auto" />
         </Button>
       </div>
     </div>
@@ -141,6 +142,7 @@ export default function SecondPage() {
     string[]
   >([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
   const selectedDateKey = useMemo(() => {
     if (!date) return null;
@@ -173,22 +175,22 @@ export default function SecondPage() {
     [unavailableCottageNames],
   );
 
-  useEffect(() => {
-    if (!selectedDateKey) {
-      setUnavailableCottageNames([]);
-      return;
-    }
+  const refreshAvailability = useCallback(
+    async (dateKey: string, showLoading = false) => {
+      if (showLoading) {
+        setIsCheckingAvailability(true);
+      }
 
-    let isActive = true;
-    setIsCheckingAvailability(true);
-
-    void fetch(`/api/bookings?availabilityDate=${selectedDateKey}`, {
-      cache: "no-store",
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { unavailableCottageNames?: string[] } | null) => {
-        if (!isActive) return;
-
+      try {
+        const response = await fetch(
+          `/api/bookings?availabilityDate=${dateKey}`,
+          {
+            cache: "no-store",
+          },
+        );
+        const data = response.ok
+          ? ((await response.json()) as { unavailableCottageNames?: string[] })
+          : null;
         const unavailableNames = Array.isArray(data?.unavailableCottageNames)
           ? data.unavailableCottageNames
           : [];
@@ -201,22 +203,56 @@ export default function SecondPage() {
             return cottage ? !unavailableNames.includes(cottage.name) : false;
           }),
         );
-      })
-      .catch(() => {
-        if (isActive) {
-          setUnavailableCottageNames([]);
-        }
-      })
-      .finally(() => {
-        if (isActive) {
+      } catch {
+        setUnavailableCottageNames([]);
+      } finally {
+        if (showLoading) {
           setIsCheckingAvailability(false);
         }
-      });
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!selectedDateKey) {
+      setUnavailableCottageNames([]);
+      return;
+    }
+
+    void refreshAvailability(selectedDateKey, true);
+  }, [refreshAvailability, selectedDateKey]);
+
+  useEffect(() => {
+    if (!selectedDateKey) return;
+
+    const refreshSelectedDate = () => {
+      void refreshAvailability(selectedDateKey);
+    };
+
+    const channel = supabase
+      .channel(`booking-availability-${selectedDateKey}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        refreshSelectedDate,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "receipts" },
+        refreshSelectedDate,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cottages" },
+        refreshSelectedDate,
+      )
+      .subscribe();
 
     return () => {
-      isActive = false;
+      void supabase.removeChannel(channel);
     };
-  }, [selectedDateKey]);
+  }, [refreshAvailability, selectedDateKey, supabase]);
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

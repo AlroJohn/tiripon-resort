@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import type {
   BookingRequestPayload,
   BookingResponse,
@@ -38,6 +39,14 @@ export function useBookingRequest() {
       if (!response.ok) {
         const message =
           "error" in result ? result.error : "Booking request failed.";
+
+        if (response.status === 409) {
+          toast.error("Cottage already taken", {
+            description:
+              message ??
+              "A selected cottage has already been reserved for that date.",
+          });
+        }
 
         throw new Error(message ?? "Booking request failed.");
       }

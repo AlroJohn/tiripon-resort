@@ -175,7 +175,7 @@ export default function Header() {
     ? "bg-accent-foreground/30"
     : separatorBackground;
   const logoSrc =
-    isAtTop || useLightHeader ? "/logo/logo-accent.png" : "/logo/logo.png";
+    isAtTop || useLightHeader ? "/logo/logo-white.png" : "/logo/logo.png";
   const headerBackgroundClass = isAtTop
     ? "bg-accent/10 shadow-lg backdrop-blur-sm"
     : "bg-accent/10 shadow-lg backdrop-blur-sm";

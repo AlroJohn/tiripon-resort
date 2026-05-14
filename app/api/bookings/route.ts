@@ -21,6 +21,13 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
+function formatMonthDay(value: Date) {
+  return new Intl.DateTimeFormat("en-PH", {
+    month: "long",
+    day: "numeric",
+  }).format(value);
+}
+
 function getBookingDayRange(value: Date) {
   const start = new Date(value);
   start.setHours(0, 0, 0, 0);
@@ -42,12 +49,16 @@ async function getPaidCottageNamesForDay(date: Date) {
       OR: [
         {
           receipt: {
-            status: "paid",
+            is: {
+              status: "paid",
+            },
           },
         },
         {
           receipt: {
-            receipt_confirmation: true,
+            is: {
+              receipt_confirmation: true,
+            },
           },
         },
       ],
@@ -161,7 +172,7 @@ export async function POST(request: Request) {
     if (unavailableCottage) {
       return Response.json(
         {
-          error: `${unavailableCottage.name} is already reserved for this date.`,
+          error: `${unavailableCottage.name} is already taken for ${formatMonthDay(checkIn)}.`,
         },
         { status: 409 },
       );
