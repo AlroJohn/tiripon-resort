@@ -29,11 +29,14 @@ function formatMonthDay(value: Date) {
 }
 
 function getBookingDayRange(value: Date) {
-  const start = new Date(value);
-  start.setHours(0, 0, 0, 0);
+  // Work with UTC dates - extract the UTC date components
+  const utcYear = value.getUTCFullYear();
+  const utcMonth = value.getUTCMonth();
+  const utcDate = value.getUTCDate();
 
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  // Create start and end as UTC midnight times
+  const start = new Date(Date.UTC(utcYear, utcMonth, utcDate, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(utcYear, utcMonth, utcDate + 1, 0, 0, 0, 0));
 
   return { start, end };
 }
@@ -252,25 +255,62 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const availabilityDate = searchParams.get("availabilityDate");
+  const timezoneOffset = searchParams.get("timezoneOffset"); // in minutes
 
   if (availabilityDate) {
-    // Parse the date string as YYYY-MM-DD (local calendar day)
+    // Parse the date string as YYYY-MM-DD (the local calendar day selected by user)
     const [year, month, day] = availabilityDate.split('-').map(Number);
 
-    // Create start and end as local midnight times
-    // These will correctly represent the calendar day regardless of server timezone
-    const localStart = new Date(year, month - 1, day, 0, 0, 0, 0);
-    const localEnd = new Date(year, month - 1, day + 1, 0, 0, 0, 0);
+    // Get the user's timezone offset in minutes (negative for UTC+, positive for UTC-)
+    const offsetMinutes = timezoneOffset ? parseInt(timezoneOffset, 10) : 0;
 
-    if (Number.isNaN(localStart.getTime()) || Number.isNaN(localEnd.getTime())) {
+    // Create dates using UTC (not affected by server timezone)
+    const utcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const utcNextMidnight = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0));
+
+    // Convert to actual UTC times for the user's local calendar day
+    // If user is UTC+8, offset is -480, so we ADD the offset to shift backwards in UTC time
+    const rangeStart = new Date(utcMidnight.getTime() + offsetMinutes * 60 * 1000);
+    const rangeEnd = new Date(utcNextMidnight.getTime() + offsetMinutes * 60 * 1000);
+
+    if (Number.isNaN(rangeStart.getTime()) || Number.isNaN(rangeEnd.getTime())) {
       return Response.json({ error: "Invalid availability date." }, { status: 400 });
     }
 
-    const paidCottageNames = await getPaidCottageNamesForDay(localStart);
+    // Query all bookings that fall within this date range and have been paid
+    const bookings = await prisma.booking.findMany({
+      where: {
+        checkIn: {
+          gte: rangeStart,
+          lt: rangeEnd,
+        },
+        receipt: {
+          OR: [
+            { status: "paid" },
+            { receipt_confirmation: true }
+          ]
+        }
+      },
+      select: {
+        cottage: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Extract all cottage names from paid bookings
+    const unavailableCottageNames = new Set<string>();
+    for (const booking of bookings) {
+      for (const cottage of booking.cottage) {
+        unavailableCottageNames.add(cottage.name);
+      }
+    }
 
     return Response.json(
       {
-        unavailableCottageNames: Array.from(paidCottageNames),
+        unavailableCottageNames: Array.from(unavailableCottageNames),
       },
       {
         headers: {

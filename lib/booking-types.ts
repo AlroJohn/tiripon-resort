@@ -15,6 +15,8 @@ export type BookingRequestPayload = {
   summary?: string;
   checkIn?: string;
   checkOut?: string;
+  selectedDateKey?: string;  // Local calendar date as YYYY-MM-DD
+  timezoneOffset?: number;   // Minutes
 };
 
 export type BookingResponse = {

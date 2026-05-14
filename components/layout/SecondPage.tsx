@@ -102,22 +102,22 @@ function GuestStepper({
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
-          className="rounded-none text-brown hover:bg-tan/30"
+          size="icon-sm"
+          className="size-9 rounded-none text-brown hover:bg-tan/30"
           onClick={() => onChange(Math.max(0, value - 1))}
           aria-label={`Decrease ${label}`}
         >
-          <Minus className="size-3 pointer-events-auto" />
+          <Minus className="size-4" />
         </Button>
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
-          className="rounded-none text-brown hover:bg-tan/30 "
+          size="icon-sm"
+          className="size-9 rounded-none text-brown hover:bg-tan/30"
           onClick={() => onChange(value + 1)}
           aria-label={`Increase ${label}`}
         >
-          <Plus className="size-3 pointer-events-auto" />
+          <Plus className="size-4" />
         </Button>
       </div>
     </div>
@@ -182,8 +182,10 @@ export default function SecondPage() {
       }
 
       try {
+        // Get timezone offset in minutes
+        const timezoneOffset = new Date().getTimezoneOffset();
         const response = await fetch(
-          `/api/bookings?availabilityDate=${dateKey}`,
+          `/api/bookings?availabilityDate=${dateKey}&timezoneOffset=${timezoneOffset}`,
           {
             cache: "no-store",
           },
@@ -314,6 +316,27 @@ export default function SecondPage() {
     setFormError(null);
 
     try {
+      // Create checkIn and checkOut dates in local timezone, then convert to UTC
+      const [year, month, day] = selectedDateKey.split("-").map(Number);
+
+      // Parse check-in time (e.g., "6:00 AM")
+      const timeMatch = checkInTime.match(/(\d+):(\d+)\s*(AM|PM)/);
+      if (!timeMatch) {
+        setFormError("Invalid check-in time format.");
+        return;
+      }
+
+      let hours = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
+      const period = timeMatch[3];
+
+      if (period === "PM" && hours !== 12) hours += 12;
+      if (period === "AM" && hours === 12) hours = 0;
+
+      // Create date in local timezone
+      const localCheckIn = new Date(year, month - 1, day, hours, minutes, 0, 0);
+      const localCheckOut = new Date(year, month - 1, day, 17, 30, 0, 0); // 5:30 PM
+
       const result = await createBooking({
         name,
         email,
@@ -327,8 +350,10 @@ export default function SecondPage() {
         number_of_kids: String(children),
         total_price: bookingTotal,
         summary: `${children} kids, ${olderGuests} adults, ${selectedCottages.length} cottage(s) selected.`,
-        checkIn: new Date(`${selectedDateKey} ${checkInTime}`).toISOString(),
-        checkOut: new Date(`${selectedDateKey} 5:30 PM`).toISOString(),
+        checkIn: localCheckIn.toISOString(),
+        checkOut: localCheckOut.toISOString(),
+        selectedDateKey,
+        timezoneOffset: new Date().getTimezoneOffset(),
       });
       setIsBookingModalOpen(false);
       toast.success("Booking request created", {
