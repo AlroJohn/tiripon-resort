@@ -89,6 +89,7 @@ type BookingsTableProps = {
 };
 
 export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps) {
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(
     null,
   );
@@ -108,6 +109,22 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [isRealtimeSubscribed, setIsRealtimeSubscribed] = useState(false);
   const [rows, setRows] = useState<BookingRow[]>(bookings);
+
+  useEffect(() => {
+    const saved =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("bookings:view-mode")
+        : null;
+
+    if (saved === "table" || saved === "cards") {
+      setViewMode(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("bookings:view-mode", viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     setRows(bookings);
@@ -187,6 +204,26 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
 
   return (
     <>
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={viewMode === "table" ? "default" : "outline"}
+          onClick={() => setViewMode("table")}
+        >
+          Table
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={viewMode === "cards" ? "default" : "outline"}
+          onClick={() => setViewMode("cards")}
+        >
+          Cards
+        </Button>
+      </div>
+
+      {viewMode === "table" ? (
       <div className="overflow-hidden rounded-lg border bg-card">
         <Table>
           <TableHeader>
@@ -312,6 +349,77 @@ export function BookingsTable({ bookings, currentPage = 1 }: BookingsTableProps)
           </TableBody>
         </Table>
       </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {rows.length === 0 ? (
+            <div className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
+              No bookings found.
+            </div>
+          ) : (
+            rows.map((booking) => (
+              <div key={booking.id} className="rounded-lg border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{booking.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {booking.email ?? booking.phone ?? "No contact"}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={
+                      booking.receipt?.status === "paid" ? "default" : "secondary"
+                    }
+                  >
+                    {booking.receipt?.status ?? "missing"}
+                  </Badge>
+                </div>
+                <div className="mt-3 grid gap-1 text-sm">
+                  <p>{booking.checkIn}</p>
+                  <p className="text-muted-foreground">to {booking.checkOut}</p>
+                  <p>
+                    {booking.numberOfAdults} adults, {booking.numberOfKids} kids
+                  </p>
+                  <p className="font-medium">{booking.totalPrice}</p>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedBooking(booking)}
+                  >
+                    <Eye />
+                    View
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      !booking.receipt ||
+                      booking.receipt.status !== "paid" ||
+                      booking.receipt.receiptConfirmation
+                    }
+                    onClick={() => setReceiptToConfirm(booking)}
+                  >
+                    <CheckCircle2 />
+                    Confirm
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setBookingToDelete(booking)}
+                  >
+                    <Trash2 />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       <Dialog
         open={Boolean(selectedBooking)}

@@ -9,7 +9,7 @@ import {
 import { BookingsTable } from "@/components/admin/bookings-table";
 import { prisma } from "@/lib/prisma";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100] as const;
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-PH", {
@@ -27,19 +27,23 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
-function getPageHref(page: number) {
-  return `/bookings?page=${page}`;
+function getPageHref(page: number, size: number) {
+  return `/bookings?page=${page}&size=${size}`;
 }
 
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<{ page?: string | string[]; size?: string | string[] }>;
 }) {
   const params = await searchParams;
   const rawPage = Array.isArray(params.page) ? params.page[0] : params.page;
+  const rawSize = Array.isArray(params.size) ? params.size[0] : params.size;
   const currentPage = Math.max(Number(rawPage ?? "1") || 1, 1);
-  const skip = (currentPage - 1) * PAGE_SIZE;
+  const selectedSize = PAGE_SIZE_OPTIONS.includes(Number(rawSize) as never)
+    ? Number(rawSize)
+    : 10;
+  const skip = (currentPage - 1) * selectedSize;
 
   const [bookings, totalBookings] = await Promise.all([
     prisma.booking.findMany({
@@ -47,7 +51,7 @@ export default async function AdminPage({
         createdAt: "desc",
       },
       skip,
-      take: PAGE_SIZE,
+      take: selectedSize,
       include: {
         cottage: {
           orderBy: {
@@ -60,7 +64,7 @@ export default async function AdminPage({
     prisma.booking.count(),
   ]);
 
-  const pageCount = Math.max(Math.ceil(totalBookings / PAGE_SIZE), 1);
+  const pageCount = Math.max(Math.ceil(totalBookings / selectedSize), 1);
   const rows = bookings.map((booking) => ({
     id: booking.id,
     name: booking.name,
@@ -104,18 +108,36 @@ export default async function AdminPage({
         </p>
       </div>
 
-      <BookingsTable bookings={rows} currentPage={currentPage} />
+      <BookingsTable
+        bookings={rows}
+        currentPage={currentPage}
+        pageSize={selectedSize}
+      />
 
       <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
           Showing {bookings.length === 0 ? 0 : skip + 1}-
           {Math.min(skip + bookings.length, totalBookings)} of {totalBookings}
         </p>
+        <div className="flex items-center gap-2">
+          <span>Show</span>
+          <div className="flex items-center gap-1">
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <PaginationLink
+                key={size}
+                href={getPageHref(1, size)}
+                isActive={size === selectedSize}
+              >
+                {size}
+              </PaginationLink>
+            ))}
+          </div>
+        </div>
         <Pagination className="mx-0 w-auto justify-start sm:justify-end">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                href={getPageHref(Math.max(currentPage - 1, 1))}
+                href={getPageHref(Math.max(currentPage - 1, 1), selectedSize)}
                 aria-disabled={currentPage <= 1}
                 className={
                   currentPage <= 1 ? "pointer-events-none opacity-50" : ""
@@ -132,7 +154,7 @@ export default async function AdminPage({
               .map((page) => (
                 <PaginationItem key={page}>
                   <PaginationLink
-                    href={getPageHref(page)}
+                    href={getPageHref(page, selectedSize)}
                     isActive={page === currentPage}
                   >
                     {page}
@@ -141,7 +163,10 @@ export default async function AdminPage({
               ))}
             <PaginationItem>
               <PaginationNext
-                href={getPageHref(Math.min(currentPage + 1, pageCount))}
+                href={getPageHref(
+                  Math.min(currentPage + 1, pageCount),
+                  selectedSize,
+                )}
                 aria-disabled={currentPage >= pageCount}
                 className={
                   currentPage >= pageCount
