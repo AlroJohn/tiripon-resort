@@ -40,43 +40,48 @@ function getBookingDayRange(value: Date) {
 
 async function getPaidCottageNamesForDay(date: Date) {
   const { start, end } = getBookingDayRange(date);
-  const paidBookings = await prisma.booking.findMany({
+
+  // Query all bookings for the date range
+  const allBookings = await prisma.booking.findMany({
     where: {
       checkIn: {
         gte: start,
         lt: end,
       },
-      OR: [
-        {
-          receipt: {
-            is: {
-              status: "paid",
-            },
-          },
-        },
-        {
-          receipt: {
-            is: {
-              receipt_confirmation: true,
-            },
-          },
-        },
-      ],
     },
     select: {
+      id: true,
       cottage: {
         select: {
           name: true,
         },
       },
+      receipt: {
+        select: {
+          status: true,
+          receipt_confirmation: true,
+        },
+      },
     },
   });
 
-  return new Set(
-    paidBookings.flatMap((booking) =>
-      booking.cottage.map((cottage) => cottage.name),
-    ),
-  );
+  // Filter for paid or confirmed bookings
+  const paidCottageNames = new Set<string>();
+
+  for (const booking of allBookings) {
+    // Check if receipt exists and is either paid or confirmed
+    if (
+      booking.receipt &&
+      (booking.receipt.status === "paid" || booking.receipt.receipt_confirmation === true)
+    ) {
+      // Add all cottages from this booking to the unavailable set
+      for (const cottage of booking.cottage) {
+        paidCottageNames.add(cottage.name);
+      }
+    }
+  }
+
+  return paidCottageNames;
 }
 
 function isBookingPayload(value: unknown): value is BookingRequestPayload {
@@ -257,9 +262,18 @@ export async function GET(request: Request) {
 
     const paidCottageNames = await getPaidCottageNamesForDay(date);
 
-    return Response.json({
-      unavailableCottageNames: Array.from(paidCottageNames),
-    });
+    return Response.json(
+      {
+        unavailableCottageNames: Array.from(paidCottageNames),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      }
+    );
   }
 
   const page = Math.max(Number(searchParams.get("page") ?? "1") || 1, 1);
@@ -306,17 +320,17 @@ export async function GET(request: Request) {
     })),
     receipt: booking.receipt
       ? {
-          id: booking.receipt.id,
-          status: booking.receipt.status,
-          receiptConfirmation: Boolean(booking.receipt.receipt_confirmation),
-          downPaymentAmount: formatCurrency(booking.receipt.downPaymentAmount),
-          proofFileName: booking.receipt.proofFileName,
-          proofMimeType: booking.receipt.proofMimeType,
-          proofViewUrl: booking.receipt.proofViewUrl,
-          proofUploadedAt: formatDate(booking.receipt.proofUploadedAt),
-          paidAt: formatDate(booking.receipt.paidAt),
-          createdAt: formatDate(booking.receipt.createdAt),
-        }
+        id: booking.receipt.id,
+        status: booking.receipt.status,
+        receiptConfirmation: Boolean(booking.receipt.receipt_confirmation),
+        downPaymentAmount: formatCurrency(booking.receipt.downPaymentAmount),
+        proofFileName: booking.receipt.proofFileName,
+        proofMimeType: booking.receipt.proofMimeType,
+        proofViewUrl: booking.receipt.proofViewUrl,
+        proofUploadedAt: formatDate(booking.receipt.proofUploadedAt),
+        paidAt: formatDate(booking.receipt.paidAt),
+        createdAt: formatDate(booking.receipt.createdAt),
+      }
       : null,
   }));
 
