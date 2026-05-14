@@ -6,29 +6,29 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 
-const villaSlides = [
+const resortSlides = [
   {
-    name: "Villa Sundara",
+    name: "Quiet Place",
     description:
-      "A place where time stands still. Among herbs' scent and the wind's whisper, find peace hidden from the world.",
+      "A calm corner for slow mornings and restful afternoons, with open skies and a peaceful Mt. Mayon view in the distance.",
     image: "/images/2.png",
   },
   {
-    name: "Villa Miraia",
+    name: "Golden Hours",
     description:
-      "A warm retreat with open views and soft evening light, made for quiet conversations and long coastal mornings.",
+      "Settle into soft afternoon light and quiet conversations while the landscape opens toward the Mt. Mayon horizon.",
     image: "/images/3.png",
   },
   {
-    name: "Villa Azari",
+    name: "Breathe and Gather",
     description:
-      "A modern escape with generous spaces, natural textures, and calm interiors that frame the surrounding sea breeze.",
+      "Wide, airy spaces made for shared moments, where breezy interiors and the distant Mt. Mayon view shape a relaxed day.",
     image: "/images/4.png",
   },
   {
-    name: "Villa Veluna",
+    name: "Private Retreat",
     description:
-      "An intimate hideaway surrounded by greenery, balancing private comfort with effortless indoor-outdoor living.",
+      "Surrounded by greenery and gentle breeze, this peaceful retreat offers quiet privacy with glimpses of Mt. Mayon beyond.",
     image: "/images/5.png",
   },
 ];
@@ -38,27 +38,29 @@ export default function ThirdPage() {
 
   useEffect(() => {
     const autoplayInterval = setInterval(() => {
-      setActiveIndex((currentIndex) => (currentIndex + 1) % villaSlides.length);
+      setActiveIndex(
+        (currentIndex) => (currentIndex + 1) % resortSlides.length,
+      );
     }, 10000);
 
     return () => clearInterval(autoplayInterval);
   }, []);
 
-  const handleVillaSelect = (index: number) => {
+  const handleSlideSelect = (index: number) => {
     setActiveIndex(index);
   };
 
-  const handlePreviousVilla = () => {
+  const handlePreviousSlide = () => {
     setActiveIndex((currentIndex) =>
-      currentIndex === 0 ? villaSlides.length - 1 : currentIndex - 1,
+      currentIndex === 0 ? resortSlides.length - 1 : currentIndex - 1,
     );
   };
 
-  const handleNextVilla = () => {
-    setActiveIndex((currentIndex) => (currentIndex + 1) % villaSlides.length);
+  const handleNextSlide = () => {
+    setActiveIndex((currentIndex) => (currentIndex + 1) % resortSlides.length);
   };
 
-  const activeSlide = villaSlides[activeIndex] ?? villaSlides[0];
+  const activeSlide = resortSlides[activeIndex] ?? resortSlides[0];
 
   return (
     <section className="min-h-dvh w-full px-4 py-12 md:px-[5dvw] md:py-20">
@@ -98,12 +100,12 @@ export default function ThirdPage() {
           </div>
 
           <div className="relative z-30 mt-10 flex flex-col items-start md:mt-16">
-            {villaSlides.map((villa, index) => (
+            {resortSlides.map((slide, index) => (
               <Button
-                key={villa.name}
+                key={slide.name}
                 type="button"
                 variant="ghost"
-                onClick={() => handleVillaSelect(index)}
+                onClick={() => handleSlideSelect(index)}
                 aria-pressed={index === activeIndex}
                 className={`mb-3 h-auto justify-start rounded-none bg-transparent p-0 text-left font-googlesansflex text-3xl leading-none shadow-none hover:bg-transparent focus-visible:ring-brown/30 sm:text-4xl ${
                   index === activeIndex
@@ -111,7 +113,7 @@ export default function ThirdPage() {
                     : "text-brown/55 hover:text-brown/80"
                 }`}
               >
-                {villa.name}
+                {slide.name}
               </Button>
             ))}
             <p className="mt-5 max-w-md font-googlesansflex text-base leading-7 text-brown/70 sm:text-lg sm:leading-8">
@@ -150,7 +152,7 @@ export default function ThirdPage() {
             }}
           >
             <p className="max-w-2xl font-googlesansflex text-lg leading-8 text-brown/65">
-              The villas were crafted using a low-impact building method that
+              The spaces were crafted using a low-impact building method that
               embraces the land&apos;s natural contours, allowing each structure
               to settle gently into the coastal landscape.
             </p>
@@ -195,8 +197,8 @@ export default function ThirdPage() {
             <Button
               type="button"
               size="icon-lg"
-              onClick={handlePreviousVilla}
-              aria-label="Previous villa"
+              onClick={handlePreviousSlide}
+              aria-label="Previous slide"
               className="absolute left-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-left-10 md:size-14"
             >
               <MoveLeft className="size-5 sm:size-6 md:size-8" />
@@ -204,8 +206,8 @@ export default function ThirdPage() {
             <Button
               type="button"
               size="icon-lg"
-              onClick={handleNextVilla}
-              aria-label="Next villa"
+              onClick={handleNextSlide}
+              aria-label="Next slide"
               className="absolute right-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-right-10 md:size-14"
             >
               <MoveRight className="size-5 sm:size-6 md:size-8" />

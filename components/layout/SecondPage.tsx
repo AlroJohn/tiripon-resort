@@ -48,24 +48,39 @@ const checkInTimes = [
 
 const cottages = [
   {
-    name: "Poolside Cabana",
-    description: "Open-air cabana for small families near the pool area.",
-    image: "/images/cabana-1.png",
-    price: 1500,
-    capacity: "4-6 guests",
+    id: "poolside-cabana-a",
+    name: "Classic Cabana",
+    description:
+      "A straightforward day-use cabana setup with open-air comfort for quick family breaks.",
+    image: "",
+    price: 500,
+    capacity: "10-12 pax",
   },
   {
+    id: "poolside-cabana-b",
+    name: "Poolside Cabana",
+    description:
+      "Steps from the water with shaded seating, ideal for guests who want easy pool access all day.",
+    image: "/images/cabana-1.png",
+    price: 400,
+    capacity: "10-12 pax",
+  },
+  {
+    id: "garden-cabana",
     name: "Garden Cabana",
-    description: "Shaded garden cottage with relaxed seating and privacy.",
+    description:
+      "Set beside lush greenery with a quieter atmosphere, designed for laid-back gatherings and privacy.",
     image: "/images/cabana-2.png",
-    price: 2200,
+    price: 400,
     capacity: "6-8 guests",
   },
   {
+    id: "family-cabana",
     name: "Family Cabana",
-    description: "Larger cabana with generous space for group day visits.",
+    description:
+      "A wider cabana layout with extra seating space, suited for bigger groups and all-day stays.",
     image: "/images/cabana-3.png",
-    price: 3200,
+    price: 300,
     capacity: "8-12 guests",
   },
 ];
@@ -114,9 +129,7 @@ export default function SecondPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedCottageNames, setSelectedCottageNames] = useState<string[]>(
-    [],
-  );
+  const [selectedCottageIds, setSelectedCottageIds] = useState<string[]>([]);
   const [date, setDate] = useState<Date>();
   const [checkInTime, setCheckInTime] = useState("6:00 AM");
   const [children, setChildren] = useState(0);
@@ -131,9 +144,8 @@ export default function SecondPage() {
   );
 
   const selectedCottages = useMemo(
-    () =>
-      cottages.filter((cottage) => selectedCottageNames.includes(cottage.name)),
-    [selectedCottageNames],
+    () => cottages.filter((cottage) => selectedCottageIds.includes(cottage.id)),
+    [selectedCottageIds],
   );
 
   const cottageTotal = useMemo(
@@ -161,11 +173,11 @@ export default function SecondPage() {
     setIsBookingModalOpen(true);
   };
 
-  const toggleCottage = (cottageName: string) => {
-    setSelectedCottageNames((current) =>
-      current.includes(cottageName)
-        ? current.filter((name) => name !== cottageName)
-        : [...current, cottageName],
+  const toggleCottage = (cottageId: string) => {
+    setSelectedCottageIds((current) =>
+      current.includes(cottageId)
+        ? current.filter((id) => id !== cottageId)
+        : [...current, cottageId],
     );
   };
 
@@ -433,18 +445,18 @@ export default function SecondPage() {
                   >
                     <CarouselContent>
                       {cottages.map((cottage) => {
-                        const isSelected = selectedCottageNames.includes(
-                          cottage.name,
+                        const isSelected = selectedCottageIds.includes(
+                          cottage.id,
                         );
 
                         return (
                           <CarouselItem
-                            key={cottage.name}
+                            key={cottage.id}
                             className="md:basis-1/2"
                           >
                             <motion.button
                               type="button"
-                              onClick={() => toggleCottage(cottage.name)}
+                              onClick={() => toggleCottage(cottage.id)}
                               whileHover={{ y: -3 }}
                               whileTap={{ scale: 0.985 }}
                               transition={{
@@ -459,13 +471,56 @@ export default function SecondPage() {
                               }`}
                             >
                               <div className="relative aspect-[4/3] w-full overflow-hidden">
-                                <Image
-                                  src={cottage.image}
-                                  alt={cottage.name}
-                                  fill
-                                  className="object-cover"
-                                  sizes="(min-width: 1024px) 36vw, 82vw"
-                                />
+                                {cottage.image ? (
+                                  <Image
+                                    src={cottage.image}
+                                    alt={cottage.name}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(min-width: 1024px) 36vw, 82vw"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-stone/40">
+                                    <svg
+                                      viewBox="0 0 64 64"
+                                      className="size-18 text-brown/60"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        d="M8 30L32 12L56 30"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                      <path
+                                        d="M14 28V52H50V28"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                      <path
+                                        d="M26 52V38H38V52"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      />
+                                      <rect
+                                        x="40"
+                                        y="16"
+                                        width="7"
+                                        height="11"
+                                        rx="1"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
                                 <motion.span
                                   className="absolute right-3 top-3 flex size-9 items-center justify-center bg-white text-brown shadow"
                                   animate={{

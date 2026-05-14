@@ -9,7 +9,7 @@ export default function PrimaryLayout({
 }) {
   return (
     <section className="min-h-dvh relative bg-gradient-to-b from-accent via-cream/30 to-cream/70">
-      <div className="absolute h-full w-full">
+      <div className="absolute inset-x-0 top-0 z-50">
         <Header />
       </div>
       {children}
