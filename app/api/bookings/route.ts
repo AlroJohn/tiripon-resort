@@ -28,63 +28,61 @@ function formatMonthDay(value: Date) {
   }).format(value);
 }
 
-function getBookingDayRange(value: Date) {
-  // Work with UTC dates - extract the UTC date components
-  const utcYear = value.getUTCFullYear();
-  const utcMonth = value.getUTCMonth();
-  const utcDate = value.getUTCDate();
+function getBookingDayRange(dateKey: string, timezoneOffset = 0) {
+  const [year, month, day] = dateKey.split("-").map(Number);
 
-  // Create start and end as UTC midnight times
-  const start = new Date(Date.UTC(utcYear, utcMonth, utcDate, 0, 0, 0, 0));
-  const end = new Date(Date.UTC(utcYear, utcMonth, utcDate + 1, 0, 0, 0, 0));
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  const utcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  const utcNextMidnight = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0));
+  const start = new Date(utcMidnight.getTime() + timezoneOffset * 60 * 1000);
+  const end = new Date(utcNextMidnight.getTime() + timezoneOffset * 60 * 1000);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return null;
+  }
 
   return { start, end };
 }
 
-async function getPaidCottageNamesForDay(date: Date) {
-  const { start, end } = getBookingDayRange(date);
+async function getPaidCottageNamesForDay(dateKey: string, timezoneOffset = 0) {
+  const range = getBookingDayRange(dateKey, timezoneOffset);
 
-  // Query all bookings for the date range
-  const allBookings = await prisma.booking.findMany({
+  if (!range) {
+    throw new Error("Invalid booking date.");
+  }
+
+  const bookings = await prisma.booking.findMany({
     where: {
       checkIn: {
-        gte: start,
-        lt: end,
+        gte: range.start,
+        lt: range.end,
+      },
+      receipt: {
+        is: {
+          OR: [
+            { status: "paid" },
+            { receipt_confirmation: true },
+          ],
+        },
       },
     },
     select: {
-      id: true,
       cottage: {
         select: {
           name: true,
         },
       },
-      receipt: {
-        select: {
-          status: true,
-          receipt_confirmation: true,
-        },
-      },
     },
   });
 
-  // Filter for paid or confirmed bookings
-  const paidCottageNames = new Set<string>();
-
-  for (const booking of allBookings) {
-    // Check if receipt exists and is either paid or confirmed
-    if (
-      booking.receipt &&
-      (booking.receipt.status === "paid" || booking.receipt.receipt_confirmation === true)
-    ) {
-      // Add all cottages from this booking to the unavailable set
-      for (const cottage of booking.cottage) {
-        paidCottageNames.add(cottage.name);
-      }
-    }
-  }
-
-  return paidCottageNames;
+  return new Set(
+    bookings.flatMap((booking) =>
+      booking.cottage.map((cottage) => cottage.name),
+    ),
+  );
 }
 
 function isBookingPayload(value: unknown): value is BookingRequestPayload {
@@ -172,7 +170,16 @@ export async function POST(request: Request) {
   }
 
   if (checkIn) {
-    const paidCottageNames = await getPaidCottageNamesForDay(checkIn);
+    const dateKey =
+      typeof body.selectedDateKey === "string" && body.selectedDateKey
+        ? body.selectedDateKey
+        : checkIn.toISOString().slice(0, 10);
+    const timezoneOffset =
+      typeof body.timezoneOffset === "number" ? body.timezoneOffset : 0;
+    const paidCottageNames = await getPaidCottageNamesForDay(
+      dateKey,
+      timezoneOffset,
+    );
     const unavailableCottage = body.cottage.find((cottage) =>
       paidCottageNames.has(cottage.name),
     );
@@ -258,55 +265,17 @@ export async function GET(request: Request) {
   const timezoneOffset = searchParams.get("timezoneOffset"); // in minutes
 
   if (availabilityDate) {
-    // Parse the date string as YYYY-MM-DD (the local calendar day selected by user)
-    const [year, month, day] = availabilityDate.split('-').map(Number);
-
-    // Get the user's timezone offset in minutes (negative for UTC+, positive for UTC-)
     const offsetMinutes = timezoneOffset ? parseInt(timezoneOffset, 10) : 0;
+    const range = getBookingDayRange(availabilityDate, offsetMinutes);
 
-    // Create dates using UTC (not affected by server timezone)
-    const utcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-    const utcNextMidnight = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0));
-
-    // Convert to actual UTC times for the user's local calendar day
-    // If user is UTC+8, offset is -480, so we ADD the offset to shift backwards in UTC time
-    const rangeStart = new Date(utcMidnight.getTime() + offsetMinutes * 60 * 1000);
-    const rangeEnd = new Date(utcNextMidnight.getTime() + offsetMinutes * 60 * 1000);
-
-    if (Number.isNaN(rangeStart.getTime()) || Number.isNaN(rangeEnd.getTime())) {
+    if (!range) {
       return Response.json({ error: "Invalid availability date." }, { status: 400 });
     }
 
-    // Query all bookings that fall within this date range and have been paid
-    const bookings = await prisma.booking.findMany({
-      where: {
-        checkIn: {
-          gte: rangeStart,
-          lt: rangeEnd,
-        },
-        receipt: {
-          OR: [
-            { status: "paid" },
-            { receipt_confirmation: true }
-          ]
-        }
-      },
-      select: {
-        cottage: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    // Extract all cottage names from paid bookings
-    const unavailableCottageNames = new Set<string>();
-    for (const booking of bookings) {
-      for (const cottage of booking.cottage) {
-        unavailableCottageNames.add(cottage.name);
-      }
-    }
+    const unavailableCottageNames = await getPaidCottageNamesForDay(
+      availabilityDate,
+      offsetMinutes,
+    );
 
     return Response.json(
       {
