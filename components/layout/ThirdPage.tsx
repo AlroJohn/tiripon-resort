@@ -199,7 +199,7 @@ export default function ThirdPage() {
               size="icon-lg"
               onClick={handlePreviousSlide}
               aria-label="Previous slide"
-              className="absolute left-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-left-10 md:size-14"
+              className="absolute left-2 top-1/2 z-20 hidden size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-left-10 md:flex md:size-14"
             >
               <MoveLeft className="size-5 sm:size-6 md:size-8" />
             </Button>
@@ -208,10 +208,30 @@ export default function ThirdPage() {
               size="icon-lg"
               onClick={handleNextSlide}
               aria-label="Next slide"
-              className="absolute right-2 top-1/2 z-20 size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-right-10 md:size-14"
+              className="absolute right-2 top-1/2 z-20 hidden size-11 -translate-y-1/2 rounded-full border border-cream bg-tan text-brown shadow-md hover:bg-khaki sm:size-10 md:-right-10 md:flex md:size-14"
             >
               <MoveRight className="size-5 sm:size-6 md:size-8" />
             </Button>
+
+            <div
+              className="mt-4 flex items-center justify-center gap-2 md:hidden"
+              aria-label="Select resort image"
+            >
+              {resortSlides.map((slide, index) => (
+                <button
+                  key={slide.name}
+                  type="button"
+                  onClick={() => handleSlideSelect(index)}
+                  aria-label={`Show ${slide.name}`}
+                  aria-current={index === activeIndex ? "true" : undefined}
+                  className={`h-2.5 rounded-full transition-all ${
+                    index === activeIndex
+                      ? "w-8 bg-brown"
+                      : "w-2.5 bg-brown/30"
+                  }`}
+                />
+              ))}
+            </div>
           </motion.div>
         </motion.div>
       </motion.div>
